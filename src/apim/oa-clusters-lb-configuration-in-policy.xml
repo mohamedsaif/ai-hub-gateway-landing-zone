@@ -1,0 +1,47 @@
+<!-- 
+    
+    Main configuration for the OpenAI routes clusters
+    Explanation of cluster properties
+    "name":         Represent the used Azure OpenAI model deployment name (which is used in the url)
+    "url":          Your backend url
+    "priority":     Lower value means higher priority over other routes. 
+    If you have more one or more Priority 1 routes, they will always be used instead
+    of Priority 2 or higher. Higher values routes will only be used if your lower values (top priority) are all throttling.
+    "isThrottling": Indicates if this endpoint is returning 429 (Too many requests) currently
+    "retryAfter":   We use it to know when to mark this endpoint as healthy again after we received a 429 response
+-->
+<fragment>
+	<!-- Getting OpenAI clusters configuration -->
+	<cache-lookup-value key="oaClusters" variable-name="oaClusters" />
+	<!-- If we can't find the configuration, it will be loaded -->
+	<choose>
+		<when condition="@(context.Variables.ContainsKey("oaClusters") == false)">
+			<set-variable name="oaClusters" value="@{
+                    
+
+                    JArray routes = new JArray();
+                    routes.Add(new JObject()
+                    {
+                        { "url", "https://openaimcapssec.openai.azure.com" },
+                        { "priority", 1},
+                        { "isThrottling", false }, 
+                        { "retryAfter", DateTime.MinValue } 
+                    });
+
+                    routes.Add(new JObject()
+                    {
+                        { "url", "https://openaimcapsweu.openai.azure.com" },
+                        { "priority", 1},
+                        { "isThrottling", false },
+                        { "retryAfter", DateTime.MinValue }
+                    });
+
+                    return routes;   
+                }" />
+			<!-- Add cluster configurations to cache -->
+			<cache-store-value key="oaClusters" value="@((JArray)context.Variables["oaClusters"])" duration="60" />
+		</when>
+	</choose>
+	<set-variable name="backendIndex" value="-1" />
+	<set-variable name="remainingroutes" value="1" />
+</fragment>
