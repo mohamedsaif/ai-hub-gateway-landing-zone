@@ -12,7 +12,10 @@
                         new JProperty("productName", context.Product.Name?.ToString() ?? "null"),
                         new JProperty("targetService", responseBody?["object"].ToString() ?? "null"),
                         new JProperty("model", responseBody?["model"].ToString() ?? "null"),
-                        new JProperty("usedBackend", (string)context.Variables.GetValueOrDefault<string>("backendUrl", "null")),
+                        new JProperty("routeUrl", (string)context.Variables.GetValueOrDefault<string>("routeUrl", "null")),
+                        new JProperty("routeLocation", (string)context.Variables.GetValueOrDefault<string>("routeLocation", "null")),
+                        new JProperty("routeName", (string)context.Variables.GetValueOrDefault<string>("routeName", "null")),
+                        new JProperty("deploymentName", (string)context.Variables.GetValueOrDefault<string>("deploymentName", "null")),
                         new JProperty("promptTokens", responseBody?["usage"]?["prompt_tokens"]?.ToString() ?? "0"),
                         new JProperty("responseTokens", responseBody?["usage"]["completion_tokens"]?.ToString() ?? "0"),
                         new JProperty("totalTokens", responseBody?["usage"]["total_tokens"]?.ToString() ?? "0")                    

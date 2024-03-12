@@ -19,7 +19,7 @@ This policy fragment is part of a larger policy and should be used in conjunctio
 -->
 <fragment>
     <!-- Getting OpenAI clusters configuration -->
-    <cache-lookup-value key="oaClusters" variable-name="oaClusters" />
+    <cache-lookup-value key="@("oaClusters" + context.Api.Revision)" variable-name="oaClusters" />
     <!-- If we can't find the configuration, it will be loaded -->
     <choose>
         <when condition="@(context.Variables.ContainsKey("oaClusters") == false)">
@@ -49,30 +49,30 @@ This policy fragment is part of a larger policy and should be used in conjunctio
                     JArray clusters = new JArray();
                     clusters.Add(new JObject()
                     {
-                        { "name", "gpt-35-turbo" },
+                        { "deploymentName", "gpt-35-turbo" },
                         { "routes", new JArray(routes[0], routes[1]) }
                     });
 
                     clusters.Add(new JObject()
                     {
-                        { "name", "gpt-4-turbo-vision" },
+                        { "deploymentName", "gpt-4" },
                         { "routes", new JArray(routes[0]) }
                     });
 
                     clusters.Add(new JObject()
                     {
-                        { "name", "dall-e-3" },
+                        { "deploymentName", "dall-e-3" },
                         { "routes", new JArray(routes[0]) }
                     });
                     
                     return clusters;   
                 }" />
             <!-- Add cluster configurations to cache -->
-            <cache-store-value key="oaClusters" value="@((JArray)context.Variables["oaClusters"])" duration="60" />
+            <cache-store-value key="@("oaClusters" + context.Api.Revision)" value="@((JArray)context.Variables["oaClusters"])" duration="60" />
         </when>
     </choose>
     <!-- Getting OpenAI clusters configuration -->
-    <cache-lookup-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes")" variable-name="routes" />
+    <cache-lookup-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Api.Revision)" variable-name="routes" />
     <!-- If we can't find the configuration, it will be loaded -->
     <choose>
         <when condition="@(context.Variables.ContainsKey("routes") == false)">
@@ -80,7 +80,7 @@ This policy fragment is part of a larger policy and should be used in conjunctio
                 value="@{
                     string deploymentName = context.Request.MatchedParameters["deployment-id"];
                     JArray clusters = (JArray)context.Variables["oaClusters"];
-                    JObject cluster = (JObject)clusters.FirstOrDefault(o => o["name"]?.Value<string>() == deploymentName);
+                    JObject cluster = (JObject)clusters.FirstOrDefault(o => o["deploymentName"]?.Value<string>() == deploymentName);
                     if(cluster == null)
                     {
                         //Error has no cluster matched the deployment name
@@ -89,7 +89,7 @@ This policy fragment is part of a larger policy and should be used in conjunctio
                     return routes;
                 }" />
             <!-- Add cluster configurations to cache -->
-            <cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes")" value="@((JArray)context.Variables["routes"])" duration="60" />
+            <cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="60" />
         </when>
     </choose>
     <set-variable name="routeIndex" value="-1" />
