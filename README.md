@@ -88,3 +88,9 @@ This is a great starting point to deploy APIM in internal mode: [Deploy Azure AP
 Application Insights is a critical component of the AI Hub Gateway Landing Zone, and it is used to monitor the operational performance of the gateway.
 
 To deploy Application Insights, you can use the following guide: [How to integrate Azure API Management with Azure Application Insights](https://azure.github.io/apim-lab/apim-lab/6-analytics-monitoring/analytics-monitoring-6-2-application-insights.html) 
+
+### Event Hub
+
+Event Hub is used to stream usage and charge-back data to target data and charge back platforms.
+
+To deploy Event Hub, you can use the following guide: [Logging with Event Hub]https://azure.github.io/apim-lab/apim-lab/6-analytics-monitoring/analytics-monitoring-6-3-event-hub.html)
