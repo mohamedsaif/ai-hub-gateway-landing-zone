@@ -62,7 +62,7 @@ Examples of these platforms could include:
 
 ## Deployment
 
-Below is a high-level guide to deploy the AI Hub Gateway Landing Zone.
+Below is a high-level guide to deploy the AI Hub Gateway Landing Zone main components.
 
 ### Networking
 For the AI Hub Gateway Landing Zone to be deployed, you will need to have/identify the following components:
@@ -94,3 +94,46 @@ To deploy Application Insights, you can use the following guide: [How to integra
 Event Hub is used to stream usage and charge-back data to target data and charge back platforms.
 
 To deploy Event Hub, you can use the following guide: [Logging with Event Hub]https://azure.github.io/apim-lab/apim-lab/6-analytics-monitoring/analytics-monitoring-6-3-event-hub.html)
+
+### Deployment summary
+
+When deployment of primary components is completed, you will have the following components deployed:
+
+- **Azure API Management**
+- **Application Insights**
+- **Event Hub**
+
+Network wiring also will be established to allow the gateway to access the AI services through private endpoints, internet access through DMZ appliances and backend systems through private network.
+
+## End-to-end scenario (Chat with data)
+
+With the AI Hub Gateway Landing Zone deployed, you can now enable various line-of-business units in your organization to leverage Azure AI services in a secure and governed manner.
+
+In this walkthrough, we will demonstrate an end-to-end scenario of a chat application that uses both Azure OpenAI and Azure AI Search through the AI Hub Gateway Landing Zone.
+
+### Scenario overview
+
+The chat application is designed to provide a conversational interface to users to interact with the AI services exposed through the AI Hub Gateway Landing Zone.
+
+The following is the high level flow of the chat application:
+
+- **Build your knowledge base**: 
+    - Using Azure Storage, we will ingest documents and other information sources into a blob based storage
+    - Using Azure AI Search, ingested data will be indexed using hybrid index (both keyword and semantic/embedding/vector based) to enable both keyword and semantic search
+    - Azure AI Search index query endpoint will be exposed through the AI Hub Gateway Landing Zone
+    - The index query endpoint will be used to search and retrieve relevant information from the knowledge base (using hybrid with semantic ranking)
+- **Build your chat experience**:
+    - Get user input: user prompt + chat history (UX)
+    - Check and answer in cache, if new question, proceed with retrieval 
+    - Build search query: through LLM, pass in user input with a prompt to generate improved search query 
+    - Submit search query to Azure AI Search: to retrieve top N list of relevant documents (best results hybrid + semantic ranking)
+    - Getting the answer: submit input, relevant documents and system prompt to LLM for answer
+
+As you can see from the chat experience, the chat application uses both Azure AI Search and Azure OpenAI through the AI Hub Gateway Landing.
+
+Also, the chat application is required to archestrate multiple AI services calls to provide the functionality, and for that it uses an AI Orchestrator framework like **Semantic Kernel** or **Langchain**.
+
+### Source code
+
+In this guide, I'm using the following `C#` based chat application that can be found here: []
+    
