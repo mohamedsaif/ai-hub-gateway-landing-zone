@@ -60,7 +60,7 @@ Examples of these platforms could include:
 - **Microsoft Fabric**: Microsoft Fabric is a cloud-based platform that provides a scalable, reliable, and secure infrastructure for building and managing data and analytics solutions.
 - **PowerBI**: Power BI is a business analytics service by Microsoft. It aims to provide interactive visualizations and business intelligence capabilities with an interface simple enough for end users to create their own reports and dashboards.
 
-## Deployment
+## Primary components deployment
 
 Below is a high-level guide to deploy the AI Hub Gateway Landing Zone main components.
 
@@ -93,7 +93,23 @@ To deploy Application Insights, you can use the following guide: [How to integra
 
 Event Hub is used to stream usage and charge-back data to target data and charge back platforms.
 
-To deploy Event Hub, you can use the following guide: [Logging with Event Hub]https://azure.github.io/apim-lab/apim-lab/6-analytics-monitoring/analytics-monitoring-6-3-event-hub.html)
+To deploy Event Hub, you can use the following guide: [Logging with Event Hub](https://azure.github.io/apim-lab/apim-lab/6-analytics-monitoring/analytics-monitoring-6-3-event-hub.html)
+
+### Additional components deployment
+
+With the primary components deployed, you can now deploy or identify the AI services and backend services that will be exposed through the AI Hub Gateway.
+
+Additional compoenets may include:
+- **Azure OpenAI**: You can have 1 or more OpenAI services deployed (like one with PTU and one with PAYG)
+- **Azure AI Search**: Azure AI Search with indexed data (1 or more indexes)
+- **Backend services**: Backend services that will include your AI business logic and experiences (like a python chat app deployed on Azure App Service as an example).
+
+For the above components, we need to ensure the following:
+- **Private endpoints**: The AI services should be exposed through private endpoints.
+- **Private DNS zone**: A private DNS zone to resolve the private endpoints for the connected Azure AI services.
+- **APIM Managed identity**: Is granted access to Azure AI services (like OpenAI and AI Search).
+- **Update endpoint and keys**: The backend services should use AI Hub Gateway endpoint and keys.
+- **Usage & charge-back**: Identify the data pipeline for tokens usage and charge back based on Event Hub integration.
 
 ### Deployment summary
 
@@ -104,6 +120,12 @@ When deployment of primary components is completed, you will have the following 
 - **Event Hub**
 
 Network wiring also will be established to allow the gateway to access the AI services through private endpoints, internet access through DMZ appliances and backend systems through private network.
+
+with the additional compoenets deployed, you will have the following components identified:
+- **Azure OpenAI** endpoints
+- **Azure AI Search** endpoints
+- **Backend services** updated endpoints and keys
+- **Usage & charge-back** data pipeline (like pushing data to Comos DB and Synapse Analytics)
 
 ## End-to-end scenario (Chat with data)
 
@@ -138,4 +160,13 @@ Also, the chat application is required to archestrate multiple AI services calls
 In this guide, I'm using the following `C#` based chat application that can be found here: [https://github.com/Azure-Samples/azure-search-openai-demo-csharp](https://github.com/Azure-Samples/azure-search-openai-demo-csharp)
 
 > **Note**: The source code is a simple chat application that uses Azure AI Search and Azure OpenAI and can be found in mulitple languages/frameworks. You can use any language/framework of your choice to build the chat application that can be found here [https://github.com/Azure-Samples/azure-search-openai-demo](https://github.com/Azure-Samples/azure-search-openai-demo)
-    
+
+The above source code is designed to connect directly to Azure AI services through managed identitiy of Azure Container Apps. 
+
+Minor modifications to chat app code are required to connect to the AI Hub Gateway Landing Zone.
+
+1. **Update the endpoint**: Update the endpoint of the AI services to the AI Hub Gateway endpoint.
+2. **Update the key**: Update the key of the AI services to the AI Hub Gateway key.
+    - This will require code changes to shift from using managed identity to gateway key.
+    - This also will require updating the deployed Azure Key Vault secrets to include the gateway key.
+    - This includes changes to both Azure OpenAI and Azure AI Search endpoints and keys.
