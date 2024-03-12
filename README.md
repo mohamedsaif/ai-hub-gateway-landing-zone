@@ -135,5 +135,7 @@ Also, the chat application is required to archestrate multiple AI services calls
 
 ### Source code
 
-In this guide, I'm using the following `C#` based chat application that can be found here: []
+In this guide, I'm using the following `C#` based chat application that can be found here: [https://github.com/Azure-Samples/azure-search-openai-demo-csharp](https://github.com/Azure-Samples/azure-search-openai-demo-csharp)
+
+> **Note**: The source code is a simple chat application that uses Azure AI Search and Azure OpenAI and can be found in mulitple languages/frameworks. You can use any language/framework of your choice to build the chat application that can be found here [https://github.com/Azure-Samples/azure-search-openai-demo](https://github.com/Azure-Samples/azure-search-openai-demo)
     
