@@ -192,8 +192,8 @@ The above source code is designed to connect directly to Azure AI services throu
 
 Minor modifications to chat app code are required to connect to the AI Hub Gateway Landing Zone.
 
-1. **Update the endpoint**: Update the endpoint of the AI services to the AI Hub Gateway endpoint.
+1. **Update the endpoint**: Update the endpoint of the AI services to the AI Hub Gateway endpoint (both OpenAI and AI Search).
 2. **Update the key**: Update the key of the AI services to the AI Hub Gateway key.
     - This will require code changes to shift from using managed identity to gateway key.
-    - This also will require updating the deployed Azure Key Vault secrets to include the gateway key.
+    - This also will require updating the deployed Azure Key Vault secrets to include the gateway keys.
     - This includes changes to both Azure OpenAI and Azure AI Search endpoints and keys.
