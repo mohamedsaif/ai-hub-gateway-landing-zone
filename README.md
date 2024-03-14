@@ -322,9 +322,16 @@ Check out one implementation for this on [enterprise-azureai](https://github.com
 
 I'm working on adopting this app so it will be only used for streaming requests (currently it is designed to do both streaming and non-streaming requests in addition to having the routing logic).
 
-
-
 There are few ways to handle this, one of them is to use an app as backend to log the usage metrics and charge-back and proxy the streaming requests.
+
+#### Capacity management
+In OpenAI calls, tokens are used to manage capacity and rate limits.
+
+Currently APIM nativly support rate limiting on the number of requests per time window, but it does not support rate limiting based on the number of tokens used (yet!).
+
+If capacity limiting based on tokens is required, you can use check out this implementation for a custom rate limiter based on tokens: [APIM Rate Limiter](https://github.com/ThePreston/Custom-Rate-Limiter-API).
+
+I believe native support is coming to APIM soon, but for now, you can use the custom rate limiter to manage capacity based on tokens.
 
 ## End-to-end scenario (Chat with data)
 
