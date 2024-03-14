@@ -305,6 +305,27 @@ Based on these records, I've created the following PowerBI dashboard to track th
 
 ![PowerBI dashboard](./assets/powerbi-usage-dashboard.png)
 
+#### oai-blocked-streaming-in-policy.xml
+This inbound policy fragment that prevent streaming requests to the OpenAI API.
+
+Currently streaming has 2 challenges when it comes to charge back and usage tracking:
+- Current approach to usage metrics loggging do not support streaming requests due to confilict with response buffring (which result in 500 error), so you can't use ```log-to-eventhub``` policy.
+- OpenAI streaming requests do not provide usage metrics in the response as it stands today (maybe it will change in the future).
+
+APIM is perfectly fine to proxy streamed backends, but usage metrics will not be captured.
+
+One solution to this is to use an app as backend to log the usage metrics and charge-back and proxy the streaming requests.
+
+This app will rely on a token counting SDK to mannually calculate the tokens and ship them to Event Hub when steam is done.
+
+Check out one implementation for this on [enterprise-azureai](https://github.com/Azure/enterprise-azureai) with an AI Proxy app that can do that.
+
+I'm working on adopting this app so it will be only used for streaming requests (currently it is designed to do both streaming and non-streaming requests in addition to having the routing logic).
+
+
+
+There are few ways to handle this, one of them is to use an app as backend to log the usage metrics and charge-back and proxy the streaming requests.
+
 ## End-to-end scenario (Chat with data)
 
 With the AI Hub Gateway Landing Zone deployed, you can now enable various line-of-business units in your organization to leverage Azure AI services in a secure and governed manner.
