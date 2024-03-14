@@ -8,7 +8,6 @@
                         new JProperty("timestamp", DateTime.UtcNow.ToString()),
                         new JProperty("appId", context.Request.Headers.GetValueOrDefault("Authorization",string.Empty).Split(' ').Last().AsJwt().Claims.GetValueOrDefault("appid", string.Empty)),
                         new JProperty("subscriptionId", context.Subscription?.Id.ToString() ?? "null"),
-                        new JProperty("subscriptionName", context.Subscription?.Name.ToString() ?? "null"),
                         new JProperty("productName", context.Product.Name?.ToString() ?? "null"),
                         new JProperty("targetService", responseBody?["object"].ToString() ?? "null"),
                         new JProperty("model", responseBody?["model"].ToString() ?? "null"),
