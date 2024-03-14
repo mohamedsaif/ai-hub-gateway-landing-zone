@@ -19,60 +19,72 @@ This policy fragment is part of a larger policy and should be used in conjunctio
 -->
 <fragment>
     <!-- Getting OpenAI clusters configuration -->
-    <cache-lookup-value key="@("oaClusters" + context.Api.Revision)" variable-name="oaClusters" />
+    <cache-lookup-value key="@("oaClusters" + context.Deployment.Region + context.Api.Revision)" variable-name="oaClusters" />
     <!-- If we can't find the configuration, it will be loaded -->
     <choose>
         <when condition="@(context.Variables.ContainsKey("oaClusters") == false)">
             <set-variable name="oaClusters"
                 value="@{
                     JArray routes = new JArray();
-                    routes.Add(new JObject()
-                    {
-                        { "name", "openaimcapssec" },
-                        { "location", "sewedencentral" },
-                        { "url", "https://openaimcapssec.openai.azure.com" },
-                        { "priority", 1},
-                        { "isThrottling", false }, 
-                        { "retryAfter", DateTime.MinValue } 
-                    });
-
-                    routes.Add(new JObject()
-                    {
-                        { "name", "openaimcapsweu" },
-                        { "location", "westeurope" },
-                        { "url", "https://openaimcapsweu.openai.azure.com" },
-                        { "priority", 1},
-                        { "isThrottling", false },
-                        { "retryAfter", DateTime.MinValue }
-                    });
-
                     JArray clusters = new JArray();
-                    clusters.Add(new JObject()
+                    if(context.Deployment.Region == "West Europe" || true)
                     {
-                        { "deploymentName", "gpt-35-turbo" },
-                        { "routes", new JArray(routes[0], routes[1]) }
-                    });
+                        routes.Add(new JObject()
+                        {
+                            { "name", "openaimcapssec" },
+                            { "location", "sewedencentral" },
+                            { "url", "https://openaimcapssec.openai.azure.com" },
+                            { "priority", 1},
+                            { "isThrottling", false }, 
+                            { "retryAfter", DateTime.MinValue } 
+                        });
 
-                    clusters.Add(new JObject()
-                    {
-                        { "deploymentName", "gpt-4" },
-                        { "routes", new JArray(routes[0]) }
-                    });
+                        routes.Add(new JObject()
+                        {
+                            { "name", "openaimcapsweu" },
+                            { "location", "westeurope" },
+                            { "url", "https://openaimcapsweu.openai.azure.com" },
+                            { "priority", 1},
+                            { "isThrottling", false },
+                            { "retryAfter", DateTime.MinValue }
+                        });
+                        clusters.Add(new JObject()
+                        {
+                            { "deploymentName", "gpt-35-turbo" },
+                            { "routes", new JArray(routes[0], routes[1]) }
+                        });
 
-                    clusters.Add(new JObject()
+                        clusters.Add(new JObject()
+                        {
+                            { "deploymentName", "embedding" },
+                            { "routes", new JArray(routes[0], routes[1]) }
+                        });
+
+                        clusters.Add(new JObject()
+                        {
+                            { "deploymentName", "gpt-4" },
+                            { "routes", new JArray(routes[0]) }
+                        });
+
+                        clusters.Add(new JObject()
+                        {
+                            { "deploymentName", "dall-e-3" },
+                            { "routes", new JArray(routes[0]) }
+                        });
+                    }
+                    else
                     {
-                        { "deploymentName", "dall-e-3" },
-                        { "routes", new JArray(routes[0]) }
-                    });
+                        //Error has no clusters for the region
+                    }
                     
                     return clusters;   
                 }" />
             <!-- Add cluster configurations to cache -->
-            <cache-store-value key="@("oaClusters" + context.Api.Revision)" value="@((JArray)context.Variables["oaClusters"])" duration="60" />
+            <cache-store-value key="@("oaClusters" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["oaClusters"])" duration="60" />
         </when>
     </choose>
-    <!-- Getting OpenAI clusters configuration -->
-    <cache-lookup-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Api.Revision)" variable-name="routes" />
+    <!-- Getting OpenAI routes configuration based on deployment name, region and api revision -->
+    <cache-lookup-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Deployment.Region + context.Api.Revision)" variable-name="routes" />
     <!-- If we can't find the configuration, it will be loaded -->
     <choose>
         <when condition="@(context.Variables.ContainsKey("routes") == false)">
@@ -89,7 +101,7 @@ This policy fragment is part of a larger policy and should be used in conjunctio
                     return routes;
                 }" />
             <!-- Add cluster configurations to cache -->
-            <cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="60" />
+            <cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="60" />
         </when>
     </choose>
     <set-variable name="routeIndex" value="-1" />

@@ -17,7 +17,7 @@
 
                 return routes; 
             }" />
-		<cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="60" />
+		<cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="60" />
 		<!-- This is the main logic to pick the route to be used -->
 		<set-variable name="routeIndex" value="@{
                 
@@ -72,7 +72,7 @@
 		<choose>
 			<!-- In case we got 429 or 5xx from a route, update the list with its status -->
 			<when condition="@(context.Response != null && (context.Response.StatusCode == 429 || context.Response.StatusCode >= 500) )">
-				<cache-lookup-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Api.Revision)" variable-name="routes" />
+				<cache-lookup-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Deployment.Region + context.Api.Revision)" variable-name="routes" />
 				<set-variable name="routes" value="@{
                         JArray routes = (JArray)context.Variables["routes"];
                         int currentrouteIndex = context.Variables.GetValueOrDefault<int>("routeIndex");
@@ -94,7 +94,7 @@
 
                         return routes;      
                     }" />
-				<cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="60" />
+				<cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="60" />
 				<set-variable name="remainingRoutes" value="@{
                         JArray routes = (JArray)context.Variables["routes"];
 
