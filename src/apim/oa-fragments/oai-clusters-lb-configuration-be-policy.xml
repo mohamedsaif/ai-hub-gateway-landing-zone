@@ -17,7 +17,7 @@
 
                 return routes; 
             }" />
-		<cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="60" />
+		<cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="86400" />
 		<!-- This is the main logic to pick the route to be used -->
 		<set-variable name="routeIndex" value="@{
                 
@@ -94,7 +94,7 @@
 
                         return routes;      
                     }" />
-				<cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="60" />
+				<cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="86400" />
 				<set-variable name="remainingRoutes" value="@{
                         JArray routes = (JArray)context.Variables["routes"];
 

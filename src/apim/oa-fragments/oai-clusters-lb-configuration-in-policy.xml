@@ -80,7 +80,7 @@ This policy fragment is part of a larger policy and should be used in conjunctio
                     return clusters;   
                 }" />
             <!-- Add cluster configurations to cache -->
-            <cache-store-value key="@("oaClusters" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["oaClusters"])" duration="60" />
+            <cache-store-value key="@("oaClusters" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["oaClusters"])" duration="86400" />
         </when>
     </choose>
     <!-- Getting OpenAI routes configuration based on deployment name, region and api revision -->
@@ -101,7 +101,7 @@ This policy fragment is part of a larger policy and should be used in conjunctio
                     return routes;
                 }" />
             <!-- Add cluster configurations to cache -->
-            <cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="60" />
+            <cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="86400" />
         </when>
     </choose>
     <set-variable name="routeIndex" value="-1" />
