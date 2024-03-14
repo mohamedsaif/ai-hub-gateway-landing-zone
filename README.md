@@ -127,6 +127,33 @@ with the additional compoenets deployed, you will have the following components 
 - **Backend services** updated endpoints and keys
 - **Usage & charge-back** data pipeline (like pushing data to Comos DB and Synapse Analytics)
 
+## Azure API Management configuration
+To configure Azure API Management to expose the AI services through the AI Hub Gateway Landing Zone, you will need to configure the following:
+
+- **APIs**: Import APIs definitions to APIM.
+- **Products**: Create products to bundle one or more APIs under a common access terms/policies.
+- **Policies**: Apply policies to the APIs to manage access, rate limits, and other governance policies.
+
+### APIs
+In this guide, I will be importing both OpenAI and AI Search APIs to APIM.
+
+Many Azure services APIs are avaiable in [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs/tree/main) reference on GitHub.
+
+#### Azure OpenAI API
+Although I have included the OpenAI API definition [in this repository](/src/apim/oai-api/oai-api-spec.yaml), you can also find the Azure OpenAI API definition in here: [Azure OpenAI API](https://github.com/Azure/azure-rest-api-specs/tree/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference)
+
+One included in the repository is inference version 2023-05-15 stable.
+
+Only main change you need to do in the downloaded API definition is to update ```"url": "https://{endpoint}/openai",``` to ```"url": "https://TO-BE-RELACED/openai",``` to avoid confilict with APIM import validation.
+
+#### Azure AI Search API
+Same story with Azure AI Search, you can find a local copy [in this repository](/src/apim/ai-search-api/ai-search-api-spec.yaml).
+
+I had to make few additional changes to the downloaded API definition to make it work with APIM import 
+validation.
+
+Public documentation for AI Search API can be found here: [Azure AI Search API](https://github.com/Azure/azure-rest-api-specs/tree/main/specification/search/data-plane/Azure.Search) (I used stable 2023-11-01 version).
+
 ## End-to-end scenario (Chat with data)
 
 With the AI Hub Gateway Landing Zone deployed, you can now enable various line-of-business units in your organization to leverage Azure AI services in a secure and governed manner.
