@@ -134,7 +134,7 @@ To configure Azure API Management to expose the AI services through the AI Hub G
 - **Products**: Create products to bundle one or more APIs under a common access terms/policies.
 - **Policies**: Apply policies to the APIs to manage access, rate limits, and other governance policies.
 
-### APIs
+### APIs import
 In this guide, I will be importing both OpenAI and AI Search APIs to APIM.
 
 Many Azure services APIs are avaiable in [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs/tree/main) reference on GitHub.
@@ -153,6 +153,110 @@ I had to make few additional changes to the downloaded API definition to make it
 validation.
 
 Public documentation for AI Search API can be found here: [Azure AI Search API](https://github.com/Azure/azure-rest-api-specs/tree/main/specification/search/data-plane/Azure.Search) (I used stable 2023-11-01 version).
+
+### Policy fragments for OpenAI
+In the [src/apim/policies](/src/apim/oa-fragments) folder, you will find the policy fragments that you can use to apply to the OpenAI API.
+
+I've built my routing stragegy based the great work of [APIM Smart Load Balancing](https://github.com/andredewes/apim-aoai-smart-loadbalancing/tree/main), it is worth checking out.
+
+I've built on top of that additional capabitlites to make the solution more robust and scalable.
+
+Features added include:
+- **Clusters (model based routing)**: it is a simple concept to group multiple OpenAI endpoints that support specific OpenAI deployment name. 
+    - This to support model-based routing
+    - For example, if the model is gpt-4 and it exists only in 2 regions, I will create a cluster with these 2 endpionts only. On the other hand, gpt-35-turbo exists in 5 regions, I will create a cluster with these 5 endpoints.
+    - In order for this routing to work, OpenAI deployment names across regions must use the same name as I rely on the URL path to extract the direct deployment name which then results in specific routes to be used.
+- **Routes**: It is json array that include all OpenAI endpoints with metadata.
+    - Each cluster will reference supported route from this json array
+    - Each route will have a friendly name, location, priority, and throttling status.
+- **Clusters and routes caching**: using APIM cache to store clusters and routes to allow it to be shared across multiple API calls contexts.
+    - **Configurations update**: Using API revision part of the caching key to allow for rolling updates of the clusters and routes through:
+        - Creating new API revion with updated clusters and routes
+        - Updating the API revision to be current (which will result in immediate creation of new cache entry with the updated clusters and routes)
+        - API revision number is part of the cache key for both clusters and routes.
+    - **Multi-region support**: Each clusters array will be stored with region name as part of the cache key to allow for multi-region support.
+
+Based on this implementation, APIM should be able to do advanced routing based on the region and model in addition to the priority and throttling status.
+
+Having revision number as part of the cache key will allow for rolling updates of the clusters and routes.
+
+Also at any given time, you will have different cached routes that represent different models/region, and based on the incoming request, you can route to the correct OpenAI endpoint.
+
+Let's have a look at the policy fragments components:
+
+#### oai-clusters-lb-configuration-in-policy.xml
+This inbound policy fragment contains the main clusters and routes configurations.
+
+Let's have a look at the configuration components:
+
+- **Routes**: a json array that include the routes to various Azure OpenAI endpoints.
+```csharp
+JArray routes = new JArray();
+routes.Add(new JObject()
+        {
+            { "name", "REPLACE1" },
+            { "location", "sewedencentral" },
+            { "url", "https://REPLACE1.openai.azure.com" },
+            { "priority", 1},
+            { "isThrottling", false }, 
+            { "retryAfter", DateTime.MinValue } 
+        });
+
+routes.Add(new JObject()
+        {
+            { "name", "REPLACE2" },
+            { "location", "westeurope" },
+            { "url", "https://REPLACE2.openai.azure.com" },
+            { "priority", 1},
+            { "isThrottling", false },
+            { "retryAfter", DateTime.MinValue }
+        });
+```
+- **Clusters**: a json array that include the clusters to various Azure OpenAI endpoints.
+```csharp
+JArray clusters = new JArray();
+clusters.Add(new JObject()
+        {
+            { "deploymentName", "gpt-35-turbo" },
+            { "routes", new JArray(routes[0], routes[1]) }
+        });
+
+clusters.Add(new JObject()
+        {
+            { "deploymentName", "embedding" },
+            { "routes", new JArray(routes[0], routes[1]) }
+        });
+
+clusters.Add(new JObject()
+        {
+            { "deploymentName", "gpt-4" },
+            { "routes", new JArray(routes[0]) }
+        });
+
+clusters.Add(new JObject()
+        {
+            { "deploymentName", "dall-e-3" },
+            { "routes", new JArray(routes[0]) }
+        });
+```
+- **Caching**: caching the clusters and routes to allow it to be shared across multiple API calls contexts.
+```xml
+<cache-store-value key="@("oaClusters" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["oaClusters"])" duration="60" />
+
+<cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="60" />
+```
+
+#### oai-clusters-lb-configuration-be-policy.xml
+This backend policy fragment contains the main routing logic for the configured inbound policy above.
+
+It selects the avaible routes based on model, region and API revision and provide the smart load balancing capabilities:
+- Priority based routing:
+    - Like if you have a cluster with 3 routs, 2 with priority 1 and 1 with priority 2, the gateway will always radnomly select one of the 2 routes with priority 1 first and fall back to priority 2 if the first 2 routes are not available (is throttling).
+- Throttling support:
+    - Ability to take a specific route out of the routing pool if it is throttling and fall back to the next available route.
+    - Activate the throttling route after a specific time (retryAfter) to allow for the route to be available again.
+
+For more elaborate description of this routing, refer to the original [APIM Smart Load Balancing](https://github.com/andredewes/apim-aoai-smart-loadbalancing/tree/main) implementation.
 
 ## End-to-end scenario (Chat with data)
 
