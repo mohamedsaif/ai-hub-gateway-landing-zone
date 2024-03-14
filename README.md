@@ -258,6 +258,54 @@ It selects the avaible routes based on model, region and API revision and provid
 
 For more elaborate description of this routing, refer to the original [APIM Smart Load Balancing](https://github.com/andredewes/apim-aoai-smart-loadbalancing/tree/main) implementation.
 
+#### oai-usage-eventhub-out-policy.xml
+This outbound policy fragment contains the main usage tracking logic for the configured inbound policy above.
+
+It sends the usage data to the configured Event Hub to allow for usage tracking and charge-back.
+
+To use this policy, you need first to configure the Event Hub logger connection string and name.
+```ps1
+# API Management service-specific details
+$apimServiceName = "apim-ai-gateway"
+$resourceGroupName = "rg-ai-gateway"
+
+# Event Hub connection string
+$eventHubConnectionString = "Endpoint=sb://<EventHubsNamespace>.servicebus.windows.net/;SharedAccessKeyName=<KeyName>;SharedAccessKey=<key
+
+# Create logger
+$context = New-AzApiManagementContext -ResourceGroupName $resourceGroupName -ServiceName $apimServiceName
+New-AzApiManagementLogger -Context $context -LoggerId "chargeback-eventhub-logger" -Name "chargeback-eventhub-logger" -ConnectionString $eventHubConnectionString -Description "Event Hub logger for OpenAI usage metrics"
+```
+
+Using this policy, you will have records like the following (I used CosmosDb to storate these metrics from Event Hub through Stream Analytics job):
+
+```json
+{
+    "id": "chatcmpl-91p2WwO4gvev3KSpwDwWjvdMsEpDs",
+    "timestamp": "2024-03-12T05:32:32.0000000Z",
+    "appId": "0000000-0000-4f5f-8ccf-8287272b09ad",
+    "subscriptionId": "master",
+    "subscriptionName": "Built-in all-access subscription",
+    "productName": "AI-Marketing",
+    "targetService": "chat.completion",
+    "model": "gpt-35-turbo",
+    "routeUrl": "https://REPLACE1.openai.azure.com/openai",
+    "routeLocation": "sewedencentral",
+    "routeName": "SewednCentralAzureOpenAI",
+    "promptTokens": 9,
+    "responseTokens": 10,
+    "totalTokens": 19,
+    "EventProcessedUtcTime": "2024-03-12T05:33:45.5528316Z",
+    "PartitionId": 0,
+    "EventEnqueuedUtcTime": "2024-03-12T05:32:32.8800000Z",
+    "deploymentName": "gpt-35-turbo"
+}
+```
+
+Based on these records, I've created the following PowerBI dashboard to track the usage and charge-back:
+
+![PowerBI dashboard](./assets/powerbi-usage-dashboard.png)
+
 ## End-to-end scenario (Chat with data)
 
 With the AI Hub Gateway Landing Zone deployed, you can now enable various line-of-business units in your organization to leverage Azure AI services in a secure and governed manner.
