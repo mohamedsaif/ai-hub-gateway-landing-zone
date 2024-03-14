@@ -7,6 +7,9 @@ The AI Hub Gateway Landing Zone is designed to be a central hub for AI services,
 ![AI Hub Gateway Landing Zone](./assets/architecture-1-0-5.png)
 
 ## Features
+
+![ai-hub-gateway-benefits.png](./assets/ai-hub-gateway-benefits.png)
+
 The AI Hub Gateway Landing Zone provides the following features:
 
 - **Centralized AI API Gateway**: A central hub for AI services, providing a single point of entry for AI services that can be shared among multiple use-cases in a secure and governed approach.
