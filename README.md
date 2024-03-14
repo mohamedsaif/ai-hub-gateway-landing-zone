@@ -285,7 +285,6 @@ Using this policy, you will have records like the following (I used CosmosDb to 
     "timestamp": "2024-03-12T05:32:32.0000000Z",
     "appId": "0000000-0000-4f5f-8ccf-8287272b09ad",
     "subscriptionId": "master",
-    "subscriptionName": "Built-in all-access subscription",
     "productName": "AI-Marketing",
     "targetService": "chat.completion",
     "model": "gpt-35-turbo",
