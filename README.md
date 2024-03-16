@@ -16,18 +16,18 @@ The AI Hub Gateway Landing Zone provides the following features:
 - **Seamless integration with Azure AI services**: Ability to just update endpoints and keys in existing apps to switch to use AI Hub Gateway.
 - **AI routing and orchestration**: The AI Hub Gateway Landing Zone provides a mechanism to route and orchestrate AI services, based on priority and target model enabling the organization to manage and govern AI services in a consistent manner.
 - **No master keys**: The AI Hub Gateway Landing Zone does not use master keys to access AI services, instead, it uses managed identities to access AI services while consumers can use gateway keys.
-- **Private connecitity**: The AI Hub Gateway Landing Zone is designed to be deployed in a private network, and it uses private endpoints to access AI services.
+- **Private connectivity**: The AI Hub Gateway Landing Zone is designed to be deployed in a private network, and it uses private endpoints to access AI services.
 - **Capacity management**: The AI Hub Gateway Landing Zone provides a mechanism to manage capacity based on requests and tokens.
 - **Usage & charge-back**: The AI Hub Gateway Landing Zone provides a mechanism to track usage and charge-back to the respective business units with flexible integration with existing charge-back & data platforms.
-- **Resilient and scalable**: The AI Hub Gateway Landing Zone is designed to be resilient and scalable, and it uses Azure API Management with its zonal redudancy and regional gateways which provides a scalable and resilient solution.
+- **Resilient and scalable**: The AI Hub Gateway Landing Zone is designed to be resilient and scalable, and it uses Azure API Management with its zonal redundancy and regional gateways which provides a scalable and resilient solution.
 - **Full observability**: The AI Hub Gateway Landing Zone provides full observability with Azure Monitor, Application Insights, and Log Analytics with detailed insights into performance, usage, and errors.
 - **Hybrid support**: The AI Hub Gateway Landing Zone approach the deployment of backends and gateway on Azure, on-premises or other clouds.
 
 ## Architecture components
 The AI Hub Gateway Landing Zone consists of the following components:
 
-### Main gateway compoenets
-These are the critical components of the AI Hub Gateway Landing Zone that provides the capaiblities outlined above.
+### Main gateway components
+These are the critical components of the AI Hub Gateway Landing Zone that provides the capabilities outlined above.
 
 - **Azure API Management**: Azure API Management is a fully managed service that enables customers to publish, secure, transform, maintain, and monitor APIs.
 - **Application Insights**: Application Insights is an extensible Application Performance Management (APM) service that provides critical insights on the gateway operational performance.
@@ -39,7 +39,7 @@ This is the Azure AI services that will be exposed through the AI Hub Gateway La
 Examples of these service could include:
 
 - **Azure OpenAI**: Azure OpenAI is a cloud deployment of cutting edge generative models from OpenAI (like ChatGPT, DALL.E and more).
-- **Azure AI Search**: Azure AI Search is a cloud search service with built-in AI capabilities that enrich all types of information to help users identify and explore relevant content at scale (critical compoenet of RAG-based generative AI applications).
+- **Azure AI Search**: Azure AI Search is a cloud search service with built-in AI capabilities that enrich all types of information to help users identify and explore relevant content at scale (critical component of RAG-based generative AI applications).
 - **Azure Cognitive Services**: Azure Cognitive Services is a set of cloud-based services with REST APIs and client library SDKs available to help you build cognitive intelligence into your applications.
 
 ### Backend services
@@ -73,10 +73,10 @@ For the AI Hub Gateway Landing Zone to be deployed, you will need to have/identi
     - APIM to be deployed in **internal mode** requires a subnet with /27 or larger with NSG that allows the critical rules.
     - **Private endpoints subnet(s)**: Private endpoints for the AI services to be exposed through the AI Hub Gateway Landing Zone. Usually a /27 or larger subnet would be sufficient.
 - **Private DNS zone**: A private DNS zone to resolve the private endpoints.
-    - Internal APIM reqlies on **private DNS** to resolve the APIM endpoints, so a Azure Private DNS zone or other DNS solution is required.
+    - Internal APIM relies on **private DNS** to resolve the APIM endpoints, so a Azure Private DNS zone or other DNS solution is required.
     - **Private endpoints DNS zone**: A private DNS zone to resolve the private endpoints for the connected Azure AI services.
 - **ExpressRoute or VPN**: If you are planning to connect to on-premises or other clouds, you will need to have an ExpressRoute or VPN connection.
-- **DMZ applicances**: If you are planning to expose backend and gateway services on the internet, you need to have a Web Application Firewall (like Azure Front Door & Application Gateway) and network filrewall (like Azure Firewall) to govern both ingress and egress traffic.
+- **DMZ appliances**: If you are planning to expose backend and gateway services on the internet, you need to have a Web Application Firewall (like Azure Front Door & Application Gateway) and network firewall (like Azure Firewall) to govern both ingress and egress traffic.
 
 ### Azure API Management (APIM)
 APIM is the central component of the AI Hub Gateway Landing Zone. 
@@ -102,7 +102,7 @@ To deploy Event Hub, you can use the following guide: [Logging with Event Hub](h
 
 With the primary components deployed, you can now deploy or identify the AI services and backend services that will be exposed through the AI Hub Gateway.
 
-Additional compoenets may include:
+Additional components may include:
 - **Azure OpenAI**: You can have 1 or more OpenAI services deployed (like one with PTU and one with PAYG)
 - **Azure AI Search**: Azure AI Search with indexed data (1 or more indexes)
 - **Backend services**: Backend services that will include your AI business logic and experiences (like a python chat app deployed on Azure App Service as an example).
@@ -124,11 +124,11 @@ When deployment of primary components is completed, you will have the following 
 
 Network wiring also will be established to allow the gateway to access the AI services through private endpoints, internet access through DMZ appliances and backend systems through private network.
 
-with the additional compoenets deployed, you will have the following components identified:
+with the additional components deployed, you will have the following components identified:
 - **Azure OpenAI** endpoints
 - **Azure AI Search** endpoints
 - **Backend services** updated endpoints and keys
-- **Usage & charge-back** data pipeline (like pushing data to Comos DB and Synapse Analytics)
+- **Usage & charge-back** data pipeline (like pushing data to Cosmos DB and Synapse Analytics)
 
 ## Azure API Management configuration
 To configure Azure API Management to expose the AI services through the AI Hub Gateway Landing Zone, you will need to configure the following:
@@ -140,14 +140,14 @@ To configure Azure API Management to expose the AI services through the AI Hub G
 ### APIs import
 In this guide, I will be importing both OpenAI and AI Search APIs to APIM.
 
-Many Azure services APIs are avaiable in [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs/tree/main) reference on GitHub.
+Many Azure services APIs are available in [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs/tree/main) reference on GitHub.
 
 #### Azure OpenAI API
 Although I have included the OpenAI API definition [in this repository](/src/apim/oai-api/oai-api-spec.yaml), you can also find the Azure OpenAI API definition in here: [Azure OpenAI API](https://github.com/Azure/azure-rest-api-specs/tree/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference)
 
 One included in the repository is inference version 2023-05-15 stable.
 
-Only main change you need to do in the downloaded API definition is to update ```"url": "https://{endpoint}/openai",``` to ```"url": "https://TO-BE-RELACED/openai",``` to avoid confilict with APIM import validation.
+Only main change you need to do in the downloaded API definition is to update ```"url": "https://{endpoint}/openai",``` to ```"url": "https://TO-BE-RELACED/openai",``` to avoid conflict with APIM import validation.
 
 #### Azure AI Search API
 Same story with Azure AI Search, you can find a local copy [in this repository](/src/apim/ai-search-api/ai-search-api-spec.yaml).
@@ -160,21 +160,21 @@ Public documentation for AI Search API can be found here: [Azure AI Search API](
 ### Policy fragments for OpenAI
 In the [src/apim/policies](/src/apim/oa-fragments) folder, you will find the policy fragments that you can use to apply to the OpenAI API.
 
-I've built my routing stragegy based the great work of [APIM Smart Load Balancing](https://github.com/andredewes/apim-aoai-smart-loadbalancing/tree/main), it is worth checking out.
+I've built my routing strategy based the great work of [APIM Smart Load Balancing](https://github.com/andredewes/apim-aoai-smart-loadbalancing/tree/main), it is worth checking out.
 
-I've built on top of that additional capabitlites to make the solution more robust and scalable.
+I've built on top of that additional capabilities to make the solution more robust and scalable.
 
 Features added include:
 - **Clusters (model based routing)**: it is a simple concept to group multiple OpenAI endpoints that support specific OpenAI deployment name. 
     - This to support model-based routing
-    - For example, if the model is gpt-4 and it exists only in 2 regions, I will create a cluster with these 2 endpionts only. On the other hand, gpt-35-turbo exists in 5 regions, I will create a cluster with these 5 endpoints.
+    - For example, if the model is gpt-4 and it exists only in 2 regions, I will create a cluster with these 2 endpoints only. On the other hand, gpt-35-turbo exists in 5 regions, I will create a cluster with these 5 endpoints.
     - In order for this routing to work, OpenAI deployment names across regions must use the same name as I rely on the URL path to extract the direct deployment name which then results in specific routes to be used.
 - **Routes**: It is json array that include all OpenAI endpoints with metadata.
     - Each cluster will reference supported route from this json array
     - Each route will have a friendly name, location, priority, and throttling status.
 - **Clusters and routes caching**: using APIM cache to store clusters and routes to allow it to be shared across multiple API calls contexts.
     - **Configurations update**: Using API revision part of the caching key to allow for rolling updates of the clusters and routes through:
-        - Creating new API revion with updated clusters and routes
+        - Creating new API revision with updated clusters and routes
         - Updating the API revision to be current (which will result in immediate creation of new cache entry with the updated clusters and routes)
         - API revision number is part of the cache key for both clusters and routes.
     - **Multi-region support**: Each clusters array will be stored with region name as part of the cache key to allow for multi-region support.
@@ -252,9 +252,9 @@ clusters.Add(new JObject()
 #### oai-clusters-lb-configuration-be-policy.xml
 This backend policy fragment contains the main routing logic for the configured inbound policy above.
 
-It selects the avaible routes based on model, region and API revision and provide the smart load balancing capabilities:
+It selects the available routes based on model, region and API revision and provide the smart load balancing capabilities:
 - Priority based routing:
-    - Like if you have a cluster with 3 routs, 2 with priority 1 and 1 with priority 2, the gateway will always radnomly select one of the 2 routes with priority 1 first and fall back to priority 2 if the first 2 routes are not available (is throttling).
+    - Like if you have a cluster with 3 routs, 2 with priority 1 and 1 with priority 2, the gateway will always randomly select one of the 2 routes with priority 1 first and fall back to priority 2 if the first 2 routes are not available (is throttling).
 - Throttling support:
     - Ability to take a specific route out of the routing pool if it is throttling and fall back to the next available route.
     - Activate the throttling route after a specific time (retryAfter) to allow for the route to be available again.
@@ -280,7 +280,7 @@ $context = New-AzApiManagementContext -ResourceGroupName $resourceGroupName -Ser
 New-AzApiManagementLogger -Context $context -LoggerId "chargeback-eventhub-logger" -Name "chargeback-eventhub-logger" -ConnectionString $eventHubConnectionString -Description "Event Hub logger for OpenAI usage metrics"
 ```
 
-Using this policy, you will have records like the following (I used CosmosDb to storate these metrics from Event Hub through Stream Analytics job):
+Using this policy, you will have records like the following (I used CosmosDb to store these metrics from Event Hub through Stream Analytics job):
 
 ```json
 {
@@ -292,8 +292,8 @@ Using this policy, you will have records like the following (I used CosmosDb to 
     "targetService": "chat.completion",
     "model": "gpt-35-turbo",
     "routeUrl": "https://REPLACE1.openai.azure.com/openai",
-    "routeLocation": "sewedencentral",
-    "routeName": "SewednCentralAzureOpenAI",
+    "routeLocation": "swedencentral",
+    "routeName": "SwedenCentralAzureOpenAI",
     "promptTokens": 9,
     "responseTokens": 10,
     "totalTokens": 19,
@@ -312,16 +312,16 @@ Based on these records, I've created the following PowerBI dashboard to track th
 This inbound policy fragment that prevent streaming requests to the OpenAI API.
 
 Currently streaming has 2 challenges when it comes to charge back and usage tracking:
-- Current approach to usage metrics loggging do not support streaming requests due to confilict with response buffring (which result in 500 error), so you can't use ```log-to-eventhub``` policy.
+- Current approach to usage metrics logging do not support streaming requests due to conflict with response buffering (which result in 500 error), so you can't use ```log-to-eventhub``` policy.
 - OpenAI streaming requests do not provide usage metrics in the response as it stands today (maybe it will change in the future).
 
 APIM is perfectly fine to proxy streamed backends, but usage metrics will not be captured.
 
 One solution to this is to use an app as backend to log the usage metrics and charge-back and proxy the streaming requests.
 
-This app will rely on a token counting SDK to mannually calculate the tokens and ship them to Event Hub when steam is done.
+This app will rely on a token counting SDK to manually calculate the tokens and ship them to Event Hub when steam is done.
 
-Check out one implementation for this on [enterprise-azureai](https://github.com/Azure/enterprise-azureai) with an AI Proxy app that can do that.
+Check out one implementation for this on [enterprise-azure-ai](https://github.com/Azure/enterprise-azureai) with an AI Proxy app that can do that.
 
 I'm working on adopting this app so it will be only used for streaming requests (currently it is designed to do both streaming and non-streaming requests in addition to having the routing logic).
 
@@ -399,15 +399,15 @@ The following is the high level flow of the chat application:
 
 As you can see from the chat experience, the chat application uses both Azure AI Search and Azure OpenAI through the AI Hub Gateway Landing.
 
-Also, the chat application is required to archestrate multiple AI services calls to provide the functionality, and for that it uses an AI Orchestrator framework like **Semantic Kernel** or **Langchain**.
+Also, the chat application is required to orchestrate multiple AI services calls to provide the functionality, and for that it uses an AI Orchestrator framework like **Semantic Kernel** or **Langchain**.
 
 ### Source code
 
 In this guide, I'm using the following `C#` based chat application that can be found here: [https://github.com/Azure-Samples/azure-search-openai-demo-csharp](https://github.com/Azure-Samples/azure-search-openai-demo-csharp)
 
-> **Note**: The source code is a simple chat application that uses Azure AI Search and Azure OpenAI and can be found in mulitple languages/frameworks. You can use any language/framework of your choice to build the chat application that can be found here [https://github.com/Azure-Samples/azure-search-openai-demo](https://github.com/Azure-Samples/azure-search-openai-demo)
+> **Note**: The source code is a simple chat application that uses Azure AI Search and Azure OpenAI and can be found in multiple languages/frameworks. You can use any language/framework of your choice to build the chat application that can be found here [https://github.com/Azure-Samples/azure-search-openai-demo](https://github.com/Azure-Samples/azure-search-openai-demo)
 
-The above source code is designed to connect directly to Azure AI services through managed identitiy of Azure Container Apps. 
+The above source code is designed to connect directly to Azure AI services through managed identity of Azure Container Apps. 
 
 Minor modifications to chat app code are required to connect to the AI Hub Gateway Landing Zone.
 
