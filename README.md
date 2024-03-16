@@ -330,11 +330,48 @@ There are few ways to handle this, one of them is to use an app as backend to lo
 #### Capacity management
 In OpenAI calls, tokens are used to manage capacity and rate limits.
 
-Currently APIM nativly support rate limiting on the number of requests per time window, but it does not support rate limiting based on the number of tokens used (yet!).
+Currently APIM natively support rate limiting on the number of requests per time window, but we can leverage that to repurpose it to manage capacity based on tokens.
 
-If capacity limiting based on tokens is required, you can use check out this implementation for a custom rate limiter based on tokens: [APIM Rate Limiter](https://github.com/ThePreston/Custom-Rate-Limiter-API).
+APIM policy [rate-limit-by-key](https://docs.microsoft.com/en-us/azure/api-management/policies/rate-limit-by-key) can be used to manage capacity based on tokens.
 
-I believe native support is coming to APIM soon, but for now, you can use the custom rate limiter to manage capacity based on tokens.
+```xml
+
+<!-- Rate limit on TPM -->
+<rate-limit-by-key calls="5000" renewal-period="60"
+counter-key="@(String.Concat(context.Subscription.Id,\"tpm\"))"
+increment-condition="@(context.Response.StatusCode >= 200 && context.Response.StatusCode < 400)"
+increment-count="@(context.Response.Body.As<JObject>(true).SelectToken(\"usage.total_tokens\").ToObject<int>())"
+remaining-calls-header-name=\"remainingTPM\" total-calls-header-name=\"totalTPM\" \>
+
+```
+
+Above policy will limit the number of tokens to 5000 per minute based on the total tokens used in the response (that is why it is an outbound policy).
+
+This policy will also add 2 headers to the response to indicate the remaining tokens and the total tokens used.
+
+This will allow the client calling the api to know how many tokens are remaining and how many tokens are used.
+
+You can also combine token rate limiting with request rate limiting to provide a more robust capacity management.
+
+```xml
+
+<!-- Rate limit on RPM -->
+<rate-limit-by-key calls="5" renewal-period="60" counter-key="@(String.Concat(context.Subscription.Id,"rpm"))" increment-condition="@(context.Response.StatusCode >= 200 && context.Response.StatusCode < 400)" remaining-calls-header-name="remainingRPM" total-calls-header-name="totalRPM" />
+
+```
+
+One more capacity control to use is the [quota-by-key](https://docs.microsoft.com/en-us/azure/api-management/policies/quota-by-key) policy.
+
+```xml
+<!-- Quota limit on requests per 5 mins -->
+<quota-by-key calls="100" renewal-period="300" counter-key="@(context.Subscription.Id)" increment-condition="@(context.Response.StatusCode >= 200 && context.Response.StatusCode < 400)" />
+
+```
+Above quota policy will limit the number of requests to 100 per 5 minutes.
+
+My recommendation is to use only the minimum required capacity management policies to avoid over-complicating the solution (for example, token limit only can be sufficient in some cases).
+
+>NOTE: I believe native policy support is coming to APIM soon, but for now, you can use the custom rate limiter to manage capacity based on tokens.
 
 ## End-to-end scenario (Chat with data)
 
