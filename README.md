@@ -198,7 +198,7 @@ JArray routes = new JArray();
 routes.Add(new JObject()
         {
             { "name", "REPLACE1" },
-            { "location", "sewedencentral" },
+            { "location", "swedencentral" },
             { "url", "https://REPLACE1.openai.azure.com" },
             { "priority", 1},
             { "isThrottling", false }, 

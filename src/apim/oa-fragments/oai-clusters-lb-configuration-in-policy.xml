@@ -31,9 +31,9 @@ This policy fragment is part of a larger policy and should be used in conjunctio
                     {
                         routes.Add(new JObject()
                         {
-                            { "name", "openaimcapssec" },
-                            { "location", "sewedencentral" },
-                            { "url", "https://openaimcapssec.openai.azure.com" },
+                            { "name", "REPLACE1" },
+                            { "location", "swedencentral" },
+                            { "url", "https://REPLACE1.openai.azure.com" },
                             { "priority", 1},
                             { "isThrottling", false }, 
                             { "retryAfter", DateTime.MinValue } 
@@ -41,9 +41,9 @@ This policy fragment is part of a larger policy and should be used in conjunctio
 
                         routes.Add(new JObject()
                         {
-                            { "name", "openaimcapsweu" },
+                            { "name", "REPLACE2" },
                             { "location", "westeurope" },
-                            { "url", "https://openaimcapsweu.openai.azure.com" },
+                            { "url", "https://REPLACE2.openai.azure.com" },
                             { "priority", 1},
                             { "isThrottling", false },
                             { "retryAfter", DateTime.MinValue }
