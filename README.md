@@ -411,8 +411,53 @@ The above source code is designed to connect directly to Azure AI services throu
 
 Minor modifications to chat app code are required to connect to the AI Hub Gateway Landing Zone.
 
+To make deployment simple, just follow the deployment instructions on the repository to have the environment up and running (it uses ```azd``` to provision the required infrastructure and code deployment).
+
+#### Configure APIM to use the new services endpoints
+
+Once the chat app is deployed, you will have a new OpenAI and AI Search services deployed and you will need to update the APIM to use the new services endpoints.
+
+For OpenAI, update the load balancing policy fragment to use the new OpenAI services endpoint.
+
+For AI Search, update the AI Search API definition to use the new AI Search services endpoint.
+
+Create a new APIM Product to use the new OpenAI and AI Search APIs (I've used AI-Marketing as an example).
+
+Create a new subscription to the new product and use the subscription key as the secret value in Azure Key Vault.
+
+As APIM will use its system managed identity to access the AI services, you will need to grant the APIM managed identity access to the new OpenAI and AI Search services.
+
+Head to each service IAM blade and add the APIM managed identity with the required role as per the following:
+1. **OpenAI**: ```Cognitive Services OpenAI User``` role
+2. **AI Search**: ```Search Index Data Reader``` role
+
+#### Update the endpoint and key
+
+The chat app is using Azure Key Vault to store the AI services endpoints and configurations.
+
+You need to update the following in Azure Key Vault:
+
 1. **Update the endpoint**: Update the endpoint of the AI services to the AI Hub Gateway endpoint (both OpenAI and AI Search).
 2. **Update the key**: Update the key of the AI services to the AI Hub Gateway key.
-    - This will require code changes to shift from using managed identity to gateway key.
-    - This also will require updating the deployed Azure Key Vault secrets to include the gateway keys.
-    - This includes changes to both Azure OpenAI and Azure AI Search endpoints and keys.
+    - Create new secrets in Azure Key Vault to store the gateway keys (AzureOpenAIKey and AzureAISearchKey).
+    - For the secret values, use the subscription key as the secret value that is configured in the previous step (you can use the same subscription key for OpenAI and Search if both APIs are added to the APIM product).
+
+#### Update the chat app code
+
+The chat app code is using Azure Key Vault to retrieve the AI services endpoints and configurations.
+
+Currently the app is using Azure Container Apps Managed identity to access both Azure OpenAI and AI Search services, we will need to make minor code changes to use the AI Hub Gateway keys instead (stored in Key Vault).
+
+The following is the high level steps to update the chat app code:
+
+**File: REPLACE.cs**
+From:
+```csharp
+
+```
+To:
+```csharp
+
+```
+
+
