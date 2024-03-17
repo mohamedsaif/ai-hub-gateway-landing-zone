@@ -537,3 +537,70 @@ services.AddSingleton<ISearchService, AzureSearchService>(sp =>
     return new AzureSearchService(searchClient);
 });
 ```
+**File: app/backend/Services/ReadRetrieveReadChatService.cs**
+
+Semantic Kernel embedding:
+From:
+```csharp
+if (configuration["UseAOAI"] == "false")
+{
+    ...
+}
+else
+{
+    var deployedModelName = configuration["AzureOpenAiChatGptDeployment"];
+    ArgumentNullException.ThrowIfNullOrWhiteSpace(deployedModelName);
+    var embeddingModelName = configuration["AzureOpenAiEmbeddingDeployment"];
+    if (!string.IsNullOrEmpty(embeddingModelName))
+    {
+        var endpoint = configuration["AzureOpenAiServiceEndpoint"];
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(endpoint);
+        
+        kernelBuilder = kernelBuilder.AddAzureOpenAITextEmbeddingGeneration(embeddingModelName, endpoint, tokenCredential ?? new DefaultAzureCredential());
+        kernelBuilder = kernelBuilder.AddAzureOpenAIChatCompletion(deployedModelName, endpoint, tokenCredential ?? new DefaultAzureCredential());
+    }
+}
+```
+To:
+```csharp
+if (configuration["UseAOAI"] == "false")
+{
+    ...
+}
+else
+{
+    var deployedModelName = configuration["AzureOpenAiChatGptDeployment"];
+    ArgumentNullException.ThrowIfNullOrWhiteSpace(deployedModelName);
+    var embeddingModelName = configuration["AzureOpenAiEmbeddingDeployment"];
+    if (!string.IsNullOrEmpty(embeddingModelName))
+    {
+        var endpoint = configuration["AzureOpenAiServiceEndpoint"];
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(endpoint);
+        
+        var azureOpenAIKey = configuration["AzureOpenAIKey"];
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(azureOpenAIKey);
+
+        kernelBuilder = kernelBuilder.AddAzureOpenAITextEmbeddingGeneration(embeddingModelName, endpoint, azureOpenAIKey);
+        kernelBuilder = kernelBuilder.AddAzureOpenAIChatCompletion(deployedModelName, endpoint, azureOpenAIKey);
+    }
+}
+```
+
+**File: app/backend/GlobalUsings.cs**
+```csharp
+...
+global using Azure;
+...
+```
+
+**Testing the changes and redeployment**
+
+After making the code changes, you can test the locally the chat app to ensure that it is using the AI Hub Gateway successfully.
+
+If you would run it locally, you need to set the azure key vault endpoint manually in the code.
+
+Once you are satisfied with the changes, you can redeploy the chat app to Azure.
+
+```bash
+azd up
+```
