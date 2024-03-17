@@ -439,7 +439,7 @@ You need to update the following in Azure Key Vault:
 
 1. **Update the endpoint**: Update the endpoint of the AI services to the AI Hub Gateway endpoint (both OpenAI and AI Search).
 2. **Update the key**: Update the key of the AI services to the AI Hub Gateway key.
-    - Create new secrets in Azure Key Vault to store the gateway keys (AzureOpenAIKey and AzureAISearchKey).
+    - Create new secrets in Azure Key Vault to store the gateway keys (```AzureazureOpenAIKey``` and ```AzureAISearchKey```).
     - For the secret values, use the subscription key as the secret value that is configured in the previous step (you can use the same subscription key for OpenAI and Search if both APIs are added to the APIM product).
 
 #### Update the chat app code
@@ -450,14 +450,90 @@ Currently the app is using Azure Container Apps Managed identity to access both 
 
 The following is the high level steps to update the chat app code:
 
-**File: REPLACE.cs**
+**File: app/backend/Extensions/ServiceCollectionExtensions.cs**
+
+For OpenAI client:
+
 From:
 ```csharp
+services.AddSingleton<OpenAIClient>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var useAOAI = config["UseAOAI"] == "true";
+    if (useAOAI)
+    {
+        var azureOpenAiServiceEndpoint = config["AzureOpenAiServiceEndpoint"];
+        ArgumentNullException.ThrowIfNullOrEmpty(azureOpenAiServiceEndpoint);
 
+        var openAIClient = new OpenAIClient(new Uri(azureOpenAiServiceEndpoint), s_azureCredential);
+
+        return openAIClient;
+    }
+    else
+    {
+        ...
+    }
+});
 ```
 To:
 ```csharp
+services.AddSingleton<OpenAIClient>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var useAOAI = config["UseAOAI"] == "true";
+    if (useAOAI)
+    {
+        var azureOpenAiServiceEndpoint = config["AzureOpenAiServiceEndpoint"];
+        ArgumentNullException.ThrowIfNullOrEmpty(azureOpenAiServiceEndpoint);
 
+        var azureOpenAIKey = config["AzureOpenAIKey"];
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(azureOpenAIKey);
+        
+        var openAIClient = new OpenAIClient(new Uri(azureOpenAiServiceEndpoint), new AzureKeyCredential(azureOpenAIKey));
+
+        return openAIClient;
+    }
+    else
+    {
+        ...
+    }
+});
 ```
+For Azure AI Search:
+From:
+```csharp
+services.AddSingleton<ISearchService, AzureSearchService>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var azureSearchServiceEndpoint = config["AzureSearchServiceEndpoint"];
+    ArgumentNullException.ThrowIfNullOrEmpty(azureSearchServiceEndpoint);
 
+    var azureSearchIndex = config["AzureSearchIndex"];
+    ArgumentNullException.ThrowIfNullOrEmpty(azureSearchIndex);
 
+    var searchClient = new SearchClient(
+                        new Uri(azureSearchServiceEndpoint), azureSearchIndex, s_azureCredential);
+
+    return new AzureSearchService(searchClient);
+});
+```
+To:
+```csharp
+services.AddSingleton<ISearchService, AzureSearchService>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var azureSearchServiceEndpoint = config["AzureSearchServiceEndpoint"];
+    ArgumentNullException.ThrowIfNullOrEmpty(azureSearchServiceEndpoint);
+
+    var azureSearchIndex = config["AzureSearchIndex"];
+    ArgumentNullException.ThrowIfNullOrEmpty(azureSearchIndex);
+
+    var azureAISearchKey = config["AzureAISearchKey"];
+    ArgumentNullException.ThrowIfNullOrWhiteSpace(azureAISearchKey);
+    
+    var searchClient = new SearchClient(
+                    new Uri(azureSearchServiceEndpoint), azureSearchIndex, new AzureKeyCredential(azureAISearchKey));
+
+    return new AzureSearchService(searchClient);
+});
+```
