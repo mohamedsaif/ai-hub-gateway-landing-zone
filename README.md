@@ -143,11 +143,15 @@ In this guide, I will be importing both OpenAI and AI Search APIs to APIM.
 Many Azure services APIs are available in [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs/tree/main) reference on GitHub.
 
 #### Azure OpenAI API
-Although I have included the OpenAI API definition [in this repository](/src/apim/oai-api/oai-api-spec.yaml), you can also find the Azure OpenAI API definition in here: [Azure OpenAI API](https://github.com/Azure/azure-rest-api-specs/tree/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference)
+Although I have included the OpenAI API definition [in this repository](/src/apim/oai-api/oai-api-spec-2024-02-01.yaml), you can also find the Azure OpenAI API definition in here: [Azure OpenAI API](https://github.com/Azure/azure-rest-api-specs/tree/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference)
 
-One included in the repository is inference version 2023-05-15 stable.
+One included in the repository is inference version 2024-02-01 stable.
 
 Only main change you need to do in the downloaded API definition is to update ```"url": "https://{endpoint}/openai",``` to ```"url": "https://TO-BE-RELACED/openai",``` to avoid conflict with APIM import validation.
+
+> **Important**: You need to append ```/openai``` to your selected ```API URL suffix``` in APIM import dialog to be something like (ai-hub-gw/openai). This is important as OpenAI SDK append /openai to the endpoint URL (not doing so you might get 404 errors from the client connecting to AI Hub Gateway endpoint).
+
+One last thing, you need to update APIM subscription header name from ```Ocp-Apim-Subscription-Key``` to ```api-key``` to match the OpenAI SDK default implementation (not doing so you might get 401 unauthorized error).
 
 #### Azure AI Search API
 Same story with Azure AI Search, you can find a local copy [in this repository](/src/apim/ai-search-api/ai-search-api-spec.yaml).
@@ -604,3 +608,6 @@ Once you are satisfied with the changes, you can redeploy the chat app to Azure.
 ```bash
 azd up
 ```
+
+```azd``` command would override the endpoint values in the Key Vault with the default ones and also will revoke your access to updating secrets. 
+Just add you access again under ```Access policies``` and replace endpoints with the correct values (pointing at the AI Hub Gateway) will fix the issue.
