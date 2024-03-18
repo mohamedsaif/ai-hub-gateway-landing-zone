@@ -165,6 +165,8 @@ Public documentation for AI Search API can be found here: [Azure AI Search API](
 
 When it comes to GenAI APIs, a need for advanced routing strategies arises to manage the capacity and resiliency for smooth AI-infused experiences across multiple clients.
 
+Setting these policies in APIM will allow for advanced routing based on the region and model in addition to the priority and throttling status.
+
 Dimensions of the routing strategies include:
 - **Global vs. regional**: Ability to route to traffic to different regional gateway might be a requirement to ensure low latency, high availability and data residency.
     - For example, if you have a global deployment of AI Hub Gateway, you might want to route traffic to the nearest gateway to the client, or route that traffic to a specific gateway based on regulatory requirements.
