@@ -161,14 +161,29 @@ validation.
 
 Public documentation for AI Search API can be found here: [Azure AI Search API](https://github.com/Azure/azure-rest-api-specs/tree/main/specification/search/data-plane/Azure.Search) (I used stable 2023-11-01 version).
 
-### Policy fragments for OpenAI
+### Gateway routing strategies (APIM)
+
+When it comes to GenAI APIs, a need for advanced routing strategies arises to manage the capacity and rate limits based on tokens and requests.
+
+Dimensions of the routing strategies include:
+- **Global vs. regional**: Ability to route to traffic to different regional gateway might be a requirement to ensure low latency, high availability and data residency.
+    - For example, if you have a global deployment of AI Hub Gateway, you might want to route traffic to the nearest gateway to the client, or route that traffic to a specific gateway based on regulatory requirements.
+- **Model-based routing**: Ability to route to traffic based on requested model is critical as not all OpenAI regional deployments support all capabilities and versions.
+    - For example, if you can have gpt-4-vision model that is only available in 2 regions, you might want to load balance traffic to these 2 regions only.
+- **Priority based routing**: Ability to route traffic based on priority is critical to ensure that the traffic is routed to preferred region first and fall back to other deployments when primary deployment is not available.
+    - For example, if you have a Provisioned Throughput Unit (PTU) deployment in certain region, you might want to route all traffic to that deployment to maximize its utilization and only fall back to a secondary deployment in another region when the PTU is throttling (this also should revert back to primary when it is available again).
+- **Throttling support**: Ability to take a specific route out of the routing pool if it is throttling and fall back to the next available route.
+    - For example, if you have a OpenAI deployment that is throttling, AI Hub Gateway should be able to take it out of the routing pool and fall back to the next available deployment and register the time needed before it is available again you might want so it can be brought back into the pool.
+- **Configuration update**: Ability to update the routing configuration without affecting the existing traffic is critical to allow for rolling updates of the routing configuration.
+    - For example, if you have a new OpenAI deployment that is available, you might want to update the routing configuration to include it and allow for new traffic to be routed to it without affecting the existing traffic (and in also support rolling back certain update when needed).
+
 In the [src/apim/policies](/src/apim/oa-fragments) folder, you will find the policy fragments that you can use to apply to the OpenAI API.
 
 I've built my routing strategy based the great work of [APIM Smart Load Balancing](https://github.com/andredewes/apim-aoai-smart-loadbalancing/tree/main), it is worth checking out.
 
-I've built on top of that additional capabilities to make the solution more robust and scalable.
+I've built on top of that additional capabilities to make the solution address all the needs outlined above for a robust and reliable AI routing engine.
 
-Features added include:
+Implementation details are as follows:
 - **Clusters (model based routing)**: it is a simple concept to group multiple OpenAI endpoints that support specific OpenAI deployment name. 
     - This to support model-based routing
     - For example, if the model is gpt-4 and it exists only in 2 regions, I will create a cluster with these 2 endpoints only. On the other hand, gpt-35-turbo exists in 5 regions, I will create a cluster with these 5 endpoints.
@@ -181,6 +196,7 @@ Features added include:
         - Creating new API revision with updated clusters and routes
         - Updating the API revision to be current (which will result in immediate creation of new cache entry with the updated clusters and routes)
         - API revision number is part of the cache key for both clusters and routes.
+        - If configuration roll back is critical, you might want to add the routing policies directly in OpenAI API - All Operations policy scope (as policy fragments don't support revisions).
     - **Multi-region support**: Each clusters array will be stored with region name as part of the cache key to allow for multi-region support.
 
 Based on this implementation, APIM should be able to do advanced routing based on the region and model in addition to the priority and throttling status.
