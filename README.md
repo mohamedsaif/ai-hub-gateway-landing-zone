@@ -163,7 +163,7 @@ Public documentation for AI Search API can be found here: [Azure AI Search API](
 
 ### Gateway routing strategies (APIM)
 
-When it comes to GenAI APIs, a need for advanced routing strategies arises to manage the capacity and rate limits based on tokens and requests.
+When it comes to GenAI APIs, a need for advanced routing strategies arises to manage the capacity and resiliency for smooth AI-infused experiences across multiple clients.
 
 Dimensions of the routing strategies include:
 - **Global vs. regional**: Ability to route to traffic to different regional gateway might be a requirement to ensure low latency, high availability and data residency.
