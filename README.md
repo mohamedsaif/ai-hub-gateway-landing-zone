@@ -4,7 +4,7 @@ The AI Hub Gateway Landing Zone is a reference architecture that provides a set 
 ## Overview
 The AI Hub Gateway Landing Zone is designed to be a central hub for AI services, providing a single point of entry for AI services, and enabling the organization to manage and govern AI services in a consistent manner. 
 
-![AI Hub Gateway Landing Zone](./assets/architecture-1-0-5.png)
+![AI Hub Gateway Landing Zone](./assets/architecture-1-0-6.png)
 
 ## Azure architecture diagram
 This example diagram shows how these different Azure services would interact in a classic [hub-spoke topology](https://learn.microsoft.com/en-us/azure/architecture/networking/architecture/hub-spoke?tabs=cli). 
