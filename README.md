@@ -81,9 +81,8 @@ Examples of these services could include:
 
 Also in these backends, it is common to use **AI Orchestrator** framework like [Semantic Kernel](https://github.com/microsoft/semantic-kernel) and [Langchain](https://www.langchain.com/) to orchestrate sophisticated AI workflows and scenarios.
 
-<a name="data-and-charge-back-platforms">
-### Data and charge-back platforms
-</a>
+### <a name="data-and-charge-back-platforms">Data and charge-back platforms</a>
+
 As part of the AI Hub Gateway Landing Zone, you will need to integrate with existing data and charge-back platforms to track usage and charge-back to the respective business units.
 
 Examples of these platforms could include:
