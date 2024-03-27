@@ -11,7 +11,7 @@ This example diagram shows how these different Azure services would interact in 
 
 ![AI Hub Gateway Landing Zone](./assets/azure-openai-landing-zone.png)
 
-###Networking
+### Networking
 
 The AI Landing Zone Virtual Network could be connected to the spokes via [virtual network peering](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview). The different applications (applications A, B and C) laying in the spoke networks would be able to resolve the API Management endpoint for their AI service consumption.
 
@@ -19,17 +19,17 @@ The different Azure OpenAi services would not be accessible to other external se
 
 For more details, see the [networking components section](#networking-components).
 
-###AI Services and Indexes
+### AI Services and Indexes
 The API Management instance would be able to communicate with one-to-many Azure OpenAI or AI service, as illustrated in the diagram. This can be a mix of 1 or more services, in 1 or more subscriptions, and also be of different model types, such as [Azure OpenAI Services](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview) or other models in [Azure Machine Learning Studio, for example Mistral](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-deploy-models-mistral?view=azureml-api-2).
 
-It is also posible to make [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/search-what-is-azure-search) indexes avaialble through the API Management instance. This is particularly useful when wanting to consume a same index of data in several applications, while ensuring finer-graned control on the index.
+It is also posible to make [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/search-what-is-azure-search) indexes available through the API Management instance. This is particularly useful when wanting to consume a same index of data in several applications, while ensuring finer-grain control on the index.
 
 For more details, see the [additional components section](#additional-components-deployment).
 
-###Other data sources
-Other data sources, such as Cosmos DB or SQL databases, could also be used as datasources to create the AI Search index.
+### Other data sources
+Other data sources, such as Cosmos DB or SQL databases, could also be used as data sources to create the AI Search index.
 
-###Cross-charging and token consumption count
+### Cross-charging and token consumption count
 When sharing AI consumption with different applications, sometimes it would be beneficial to know the token consumption for each application, in order to calculate charge-backs. This is possible using a combination of different services, such as Event Hub, Synapse Analytics, Cosmos DB and PowerBI.
 For more details, see the [data and charge-back platforms section](#data-and-charge-back-platforms).
 
