@@ -129,9 +129,7 @@ Event Hub is used to stream usage and charge-back data to target data and charge
 
 To deploy Event Hub, you can use the following guide: [Logging with Event Hub](https://azure.github.io/apim-lab/apim-lab/6-analytics-monitoring/analytics-monitoring-6-3-event-hub.html)
 
-<a name="additional-components-deployment">
-### Additional components deployment
-</a>
+### <a name="additional-components-deployment">Additional components deployment</a>
 
 With the primary components deployed, you can now deploy or identify the AI services and backend services that will be exposed through the AI Hub Gateway.
 
