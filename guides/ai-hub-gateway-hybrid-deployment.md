@@ -14,10 +14,10 @@ The Developer Portal and API Management Service will remain hosted on Azure.
 I will be creating here a resource group, container app environment and a container app to host APIM API gateway.
 
 ```bash
-PROJECT=contoso-ai-gateway
+PROJECT=ai-gateway
 RESOURCE_GROUP=rg-$PROJECT
-ACA_SELFHOSTED_NAME=aca-$PROJECT-app-primary
-ACA_SELFHOSTED_ENV=aca-$PROJECT-env-primary
+ACA_SELFHOSTED_NAME=aca-$PROJECT-app
+ACA_SELFHOSTED_ENV=aca-$PROJECT-env
 LOCATION=northeurope
 
 az group create --name $RESOURCE_GROUP --location $LOCATION
@@ -31,18 +31,18 @@ TOKEN="REPLACE_WITH_YOUR_KEY"
 
 
 az containerapp create --name $ACA_SELFHOSTED_NAME \
-  --environment $ACA_PRIMARY_ENV \
+  --environment $ACA_SELFHOSTED_ENV \
   --resource-group $RESOURCE_GROUP \
   --ingress 'external' \
-  --registry-server $ACR_NAME.azurecr.io \
   --image mcr.microsoft.com/azure-api-management/gateway:2.5.0 \
   --target-port 8080 \
   --query properties.configuration.ingress.fqdn \
   --env-vars "config.service.endpoint"="$ENDPOINT" "config.service.auth"="$TOKEN" "net.server.http.forwarded.proto.enabled"="true"
 
-# Testing the deployment
-GATEWAY_URL=(az containerapp show --name $ACA_SELFHOSTED_NAME --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" --output tsv)
-curl -i $GATEWAY_URL
+# Testing the deployment (you should get empty 200 response)
+GATEWAY_URL=$(az containerapp show --name $ACA_SELFHOSTED_NAME --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" --output tsv)
+echo $GATEWAY_URL
+curl -i https://$GATEWAY_URL/status-0123456789abcdef
 
 ```
 
