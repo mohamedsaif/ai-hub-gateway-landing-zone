@@ -96,10 +96,28 @@ This policy fragment is part of a larger policy and should be used in conjunctio
                     if(cluster == null)
                     {
                         //Error has no cluster matched the deployment name
+                        return new JArray() { new JObject()
+                            {
+                                { "name", deploymentName },
+                                { "location", "NA" },
+                                { "url", "No routes found for the deployment (" + deploymentName + ") in the region (" + context.Deployment.Region + ")" }
+                            }
+                        };
                     }
                     JArray routes = (JArray)cluster["routes"];
                     return routes;
                 }" />
+            <!-- If no routes found for deployment, return bad request with content of routes variable -->
+            <choose>
+                <when condition="@(((JArray)context.Variables["routes"]).ToString().Contains("No routes"))">
+                    <return-response>
+                        <set-status code="400" reason="No routes"/>
+                        <set-body>
+                            @(((JArray)context.Variables["routes"]).ToString())
+                        </set-body>
+                     </return-response>
+                </when>
+            </choose>
             <!-- Add cluster configurations to cache -->
             <cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="86400" />
         </when>
