@@ -74,7 +74,7 @@ This policy fragment is part of a larger policy and should be used in conjunctio
                     }
                     else
                     {
-                        //Error has no clusters for the region
+                        //No clusters found, either return error or set default cluster
                     }
                     
                     return clusters;   
