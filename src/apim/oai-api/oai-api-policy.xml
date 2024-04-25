@@ -7,7 +7,7 @@
         <include-fragment fragment-id="oai-blocked-streaming-in-policy" />
         <set-header name="api-key" exists-action="delete" />
         <authentication-managed-identity resource="https://cognitiveservices.azure.com" />
-        <include-fragment fragment-id="oa-clusters-lb-configuration-in-policy" />
+        <include-fragment fragment-id="oai-clusters-lb-configuration-in-policy" />
     </inbound>
     <backend>
         <include-fragment fragment-id="oai-clusters-lb-configuration-be-policy" />

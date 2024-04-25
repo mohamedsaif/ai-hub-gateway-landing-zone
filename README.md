@@ -388,12 +388,13 @@ APIM policy [rate-limit-by-key](https://docs.microsoft.com/en-us/azure/api-manag
 
 ```xml
 
-<!-- Rate limit on TPM -->
-<rate-limit-by-key calls="5000" renewal-period="60"
-counter-key="@(String.Concat(context.Subscription.Id,\"tpm\"))"
-increment-condition="@(context.Response.StatusCode >= 200 && context.Response.StatusCode < 400)"
-increment-count="@(context.Response.Body.As<JObject>(true).SelectToken(\"usage.total_tokens\").ToObject<int>())"
-remaining-calls-header-name=\"remainingTPM\" total-calls-header-name=\"totalTPM\" \>
+<!-- Rate limit on TPM (Outbound Policy) -->
+<!-- Note: this policy is designed to be integrated with other APIM policies in this guide -->
+<rate-limit-by-key calls="5000" renewal-period="60" 
+    counter-key="@(String.Concat(context.Subscription.Id,"tpm"))" 
+    increment-condition="@(context.Response.StatusCode >= 200 && context.Response.StatusCode < 400)" 
+    increment-count="@(((JObject)context.Variables["responseBody"]).SelectToken("usage.total_tokens")?.ToObject<int>() ?? 0)" 
+    remaining-calls-header-name="remainingTPM" total-calls-header-name="totalTPM" />
 
 ```
 
