@@ -36,11 +36,11 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-
   name: managedIdentityName
 }
 
-resource eventHubNamespace 'Microsoft.EventHub/namespaces@2024-01-01' existing = {
+resource eventHubNamespace 'Microsoft.EventHub/namespaces@2023-01-01-preview' existing = {
   name: eventHubNamespaceName
 }
 
-resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' existing = {
+resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2023-01-01-preview' existing = {
   name: eventHubName
 }
 
@@ -114,6 +114,14 @@ resource retailProduct 'Microsoft.ApiManagement/service/products@2020-06-01-prev
   }
 }
 
+resource retailProductApis 'Microsoft.ApiManagement/service/products/apiLinks@2023-05-01-preview' = {
+  name: 'apimOpenAIApi'
+  parent: retailProduct
+  properties: {
+    apiId: apimOpenaiApi.id
+  }
+}
+
 resource hrProduct 'Microsoft.ApiManagement/service/products@2020-06-01-preview' = {
   name: 'ai-hr'
   parent: apimService
@@ -132,7 +140,7 @@ resource retailSubscription 'Microsoft.ApiManagement/service/subscriptions@2020-
   name: 'ai-retail-internal-sub'
   parent: apimService
   properties: {
-    displayName: 'AI-Retail-Internal0Subscription'
+    displayName: 'AI-Retail-Internal-Subscription'
     state: 'active'
     scope: retailProduct.id
   }
@@ -142,7 +150,7 @@ resource hrSubscription 'Microsoft.ApiManagement/service/subscriptions@2020-06-0
   name: 'hr-retail-internal-sub'
   parent: apimService
   properties: {
-    displayName: 'AI-Retail-Internal0Subscription'
+    displayName: 'AI-HR-Internal-Subscription'
     state: 'active'
     scope: hrProduct.id
   }
@@ -256,14 +264,14 @@ resource apimLogger 'Microsoft.ApiManagement/service/loggers@2021-12-01-preview'
     credentials: {
       instrumentationKey: applicationInsights.properties.InstrumentationKey
     }
-    description: 'Event Hub logger for OpenAI usage metrics'
+    description: 'Application Insights logger for API observability'
     isBuffered: false
     loggerType: 'applicationInsights'
     resourceId: applicationInsights.id
   }
 }
 
-resource ehUsageLogger 'Microsoft.ApiManagement/service/loggers@2022-04-01-preview' = {
+resource ehUsageLogger 'Microsoft.ApiManagement/service/loggers@2022-08-01' = {
   name: 'usage-eventhub-logger'
   parent: apimService
   properties: {
@@ -272,8 +280,8 @@ resource ehUsageLogger 'Microsoft.ApiManagement/service/loggers@2022-04-01-previ
     credentials: {
       name: eventHub.name
       // connectionString: 'Endpoint=sb://<EventHubsNamespace>.servicebus.windows.net/;SharedAccessKeyName=<KeyName>;SharedAccessKey=<key>'
-      endpointAddress: eventHubEndpoint
-      identityClientId: managedIdentity.id
+      endpointAddress: replace(eventHubEndpoint, 'https://', '')
+      identityClientId: managedIdentity.properties.clientId
     }
   }
   dependsOn: [
