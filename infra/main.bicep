@@ -33,6 +33,9 @@ param applicationInsightsName string = ''
 @description('Name of the Event Hub Namespace resource. Leave blank to use default naming conventions.')
 param eventHubNamespaceName string = ''
 
+@description('Name of the Cosmos Db account resource. Leave blank to use default naming conventions.')
+param cosmosDbAccountName string = ''
+
 // You can add more OpenAI instances by adding more objects to the openAiInstances object
 // Then update the apim policy xml to include the new instances
 @description('Object containing OpenAI instances. You can add more instances by adding more objects to this parameter.')
@@ -186,6 +189,16 @@ module apim './modules/apim/apim.bicep' = {
     audience: entraAuth ? entraAudience : null
     eventHubName: eventHub.outputs.eventHubName
     eventHubEndpoint: eventHub.outputs.eventHubEndpoint
+  }
+}
+
+module cosmosDb './modules/cosmos-db/cosmos-db.bicep' = {
+  name: 'cosmos-db'
+  scope: resourceGroup
+  params: {
+    accountName: !empty(cosmosDbAccountName) ? cosmosDbAccountName : '${abbrs.documentDBDatabaseAccounts}${resourceToken}'
+    location: location
+    tags: tags
   }
 }
 
