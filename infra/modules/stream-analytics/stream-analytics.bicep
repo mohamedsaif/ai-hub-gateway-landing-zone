@@ -28,7 +28,7 @@ resource streamAnalyticsJob 'Microsoft.StreamAnalytics/streamingjobs@2021-10-01-
       name: 'Standard'
     }
     eventsOutOfOrderPolicy: 'Adjust'
-    outputErrorPolicy: 'Drop'
+    outputErrorPolicy: 'Retry'
     eventsOutOfOrderMaxDelayInSeconds: 5
     compatibilityLevel: '1.2'
     inputs: [
@@ -64,8 +64,8 @@ resource streamAnalyticsJob 'Microsoft.StreamAnalytics/streamingjobs@2021-10-01-
               database: cosmosDbDatabaseName
               collectionNamePattern: cosmosDbContainerName
               authenticationMode: 'Msi'
-              documentId: '/id'
-              partitionKey: '/productName'
+              documentId: 'id'
+              partitionKey: 'productName'
             }
           }
         }
