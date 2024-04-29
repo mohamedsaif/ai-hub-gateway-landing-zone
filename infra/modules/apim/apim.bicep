@@ -16,7 +16,6 @@ param managedIdentityName string
 param clientAppId string = ' '
 param tenantId string = tenant().tenantId
 param audience string = 'https://cognitiveservices.azure.com/.default'
-param eventHubNamespaceName string
 param eventHubName string
 param eventHubEndpoint string
 
@@ -34,10 +33,6 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' existing
 
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
   name: managedIdentityName
-}
-
-resource eventHubNamespace 'Microsoft.EventHub/namespaces@2023-01-01-preview' existing = {
-  name: eventHubNamespaceName
 }
 
 resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2023-01-01-preview' existing = {
@@ -100,6 +95,7 @@ resource apimOpenaiApi 'Microsoft.ApiManagement/service/apis@2022-08-01' = {
   }
 }
 
+// Create retail product
 resource retailProduct 'Microsoft.ApiManagement/service/products@2020-06-01-preview' = {
   name: 'ai-retail'
   parent: apimService
@@ -114,14 +110,37 @@ resource retailProduct 'Microsoft.ApiManagement/service/products@2020-06-01-prev
   }
 }
 
-resource retailProductApis 'Microsoft.ApiManagement/service/products/apiLinks@2023-05-01-preview' = {
-  name: 'apimOpenAIApi'
+resource retailProductOpenAIApi 'Microsoft.ApiManagement/service/products/apiLinks@2023-05-01-preview' = {
+  name: 'retail-product-openai-api'
   parent: retailProduct
   properties: {
     apiId: apimOpenaiApi.id
   }
 }
 
+resource retailProductPolicy 'Microsoft.ApiManagement/service/products/policies@2022-08-01' =  {
+  name: 'policy'
+  parent: retailProduct
+  properties: {
+    value: loadTextContent('./policies/retail_product_policy.xml')
+    format: 'rawxml'
+  }
+  dependsOn: [
+    apimOpenaiApi
+  ]
+}
+
+resource retailSubscription 'Microsoft.ApiManagement/service/subscriptions@2020-06-01-preview' = {
+  name: 'ai-retail-internal-sub'
+  parent: apimService
+  properties: {
+    displayName: 'AI-Retail-Internal-Subscription'
+    state: 'active'
+    scope: retailProduct.id
+  }
+}
+
+// Create HR product
 resource hrProduct 'Microsoft.ApiManagement/service/products@2020-06-01-preview' = {
   name: 'ai-hr'
   parent: apimService
@@ -136,14 +155,24 @@ resource hrProduct 'Microsoft.ApiManagement/service/products@2020-06-01-preview'
   }
 }
 
-resource retailSubscription 'Microsoft.ApiManagement/service/subscriptions@2020-06-01-preview' = {
-  name: 'ai-retail-internal-sub'
-  parent: apimService
+resource hrProductOpenAIApi 'Microsoft.ApiManagement/service/products/apiLinks@2023-05-01-preview' = {
+  name: 'hr-product-openai-api'
+  parent: hrProduct
   properties: {
-    displayName: 'AI-Retail-Internal-Subscription'
-    state: 'active'
-    scope: retailProduct.id
+    apiId: apimOpenaiApi.id
   }
+}
+
+resource hrProductPolicy 'Microsoft.ApiManagement/service/products/policies@2022-08-01' =  {
+  name: 'policy'
+  parent: hrProduct
+  properties: {
+    value: loadTextContent('./policies/hr_product_policy.xml')
+    format: 'rawxml'
+  }
+  dependsOn: [
+    apimOpenaiApi
+  ]
 }
 
 resource hrSubscription 'Microsoft.ApiManagement/service/subscriptions@2020-06-01-preview' = {
@@ -233,30 +262,6 @@ resource openaiApiPolicy 'Microsoft.ApiManagement/service/apis/policies@2022-08-
   ]
 }
 
-resource retailProductPolicy 'Microsoft.ApiManagement/service/products/policies@2022-08-01' =  {
-  name: 'policy'
-  parent: retailProduct
-  properties: {
-    value: loadTextContent('./policies/retail_product_policy.xml')
-    format: 'rawxml'
-  }
-  dependsOn: [
-    apimOpenaiApi
-  ]
-}
-
-resource hrProductPolicy 'Microsoft.ApiManagement/service/products/policies@2022-08-01' =  {
-  name: 'policy'
-  parent: hrProduct
-  properties: {
-    value: loadTextContent('./policies/hr_product_policy.xml')
-    format: 'rawxml'
-  }
-  dependsOn: [
-    apimOpenaiApi
-  ]
-}
-
 resource apimLogger 'Microsoft.ApiManagement/service/loggers@2021-12-01-preview' = {
   name: 'appinsights-logger'
   parent: apimService
@@ -279,7 +284,6 @@ resource ehUsageLogger 'Microsoft.ApiManagement/service/loggers@2022-08-01' = {
     description: 'Event Hub logger for OpenAI usage metrics'
     credentials: {
       name: eventHub.name
-      // connectionString: 'Endpoint=sb://<EventHubsNamespace>.servicebus.windows.net/;SharedAccessKeyName=<KeyName>;SharedAccessKey=<key>'
       endpointAddress: replace(eventHubEndpoint, 'https://', '')
       identityClientId: managedIdentity.properties.clientId
     }
@@ -289,25 +293,26 @@ resource ehUsageLogger 'Microsoft.ApiManagement/service/loggers@2022-08-01' = {
   ]
 }
 
-resource apimUser 'Microsoft.ApiManagement/service/users@2020-06-01-preview' = {
+resource apimRetailDevUser 'Microsoft.ApiManagement/service/users@2020-06-01-preview' = {
   parent: apimService
-  name: 'myUser'
+  name: 'ai-retail-dev-user'
   properties: {
-    firstName: 'My'
-    lastName: 'User'
+    firstName: 'Retail AI'
+    lastName: 'Developer'
     email: 'myuser@example.com'
     state: 'active'
   }
 }
 
-resource apimSubscription 'Microsoft.ApiManagement/service/subscriptions@2020-06-01-preview' = {
+resource apimRetailDevUserSubscription 'Microsoft.ApiManagement/service/subscriptions@2020-06-01-preview' = {
   parent: apimService
-  name: 'mySubscription'
+  name: 'retail-ai-dev-user-subscription'
   properties: {
-    displayName: 'My Subscription'
+    displayName: 'Retail AI Dev User Subscription'
+    ownerId: '/users/${apimRetailDevUser.id}'
     state: 'active'
     allowTracing: true
-    scope: '/apis/${apimOpenaiApi.name}'
+    scope: '/products/${retailProduct.id}'
   }
 }
 
