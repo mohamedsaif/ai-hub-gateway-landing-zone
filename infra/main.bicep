@@ -101,13 +101,24 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   tags: tags
 }
 
-module managedIdentity './modules/security/managed-identity.bicep' = {
+module managedIdentity './modules/security/managed-identity-apim.bicep' = {
   name: 'managed-identity'
   scope: resourceGroup
   params: {
     name: !empty(identityName) ? identityName : '${abbrs.managedIdentityUserAssignedIdentities}${resourceToken}'
     location: location
     tags: tags
+  }
+}
+
+module streamAnalyticsManagedIdentity './modules/security/managed-identity-stream-analytics.bicep' = {
+  name: 'stream-analytics-managed-identity'
+  scope: resourceGroup
+  params: {
+    name: !empty(identityName) ? identityName : '${abbrs.managedIdentityUserAssignedIdentities}asa-${resourceToken}'
+    location: location
+    tags: tags
+    cosmosDbAccountName: cosmosDb.outputs.cosmosDbAccountName
   }
 }
 
@@ -199,6 +210,22 @@ module cosmosDb './modules/cosmos-db/cosmos-db.bicep' = {
     accountName: !empty(cosmosDbAccountName) ? cosmosDbAccountName : '${abbrs.documentDBDatabaseAccounts}${resourceToken}'
     location: location
     tags: tags
+  }
+}
+
+module streamAnalyticsJob './modules/stream-analytics/stream-analytics.bicep' = {
+  name: 'stream-analytics-job'
+  scope: resourceGroup
+  params: {
+    jobName: !empty(cosmosDbAccountName) ? cosmosDbAccountName : '${abbrs.streamAnalyticsCluster}${resourceToken}'
+    location: location
+    tags: tags
+    eventHubNamespace: eventHub.outputs.eventHubNamespaceName
+    eventHubName: eventHub.outputs.eventHubName
+    cosmosDbAccountName: cosmosDb.outputs.cosmosDbAccountName
+    cosmosDbDatabaseName: cosmosDb.outputs.cosmosDbDatabaseName
+    cosmosDbContainerName: cosmosDb.outputs.cosmosDbContainerName
+    managedIdentityName: streamAnalyticsManagedIdentity.outputs.managedIdentityName
   }
 }
 

@@ -123,6 +123,7 @@ resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/container
 }
 
 output location string = location
-output name string = database.name
-output resourceGroupName string = resourceGroup().name
+output cosmosDbAccountName string = account.name
+output cosmosDbDatabaseName string = database.name
+output cosmosDbContainerName string = container.name
 output resourceId string = database.id
