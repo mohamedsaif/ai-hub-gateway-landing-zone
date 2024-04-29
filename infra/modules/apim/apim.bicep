@@ -276,6 +276,46 @@ resource apimLogger 'Microsoft.ApiManagement/service/loggers@2021-12-01-preview'
   }
 }
 
+resource apimAppInsights 'Microsoft.ApiManagement/service/diagnostics@2022-08-01' = {
+  parent: apimService
+  name: 'applicationinsights'
+  properties: {
+    alwaysLog: 'allErrors'
+    httpCorrelationProtocol: 'Legacy'
+    verbosity: 'information'
+    logClientIp: true
+    loggerId: apimLogger.id
+    sampling: {
+      samplingType: 'fixed'
+      percentage: 100
+    }
+    frontend: {
+      request: {
+        body: {
+          bytes: 0
+        }
+      }
+      response: {
+        body: {
+          bytes: 0
+        }
+      }
+    }
+    backend: {
+      request: {
+        body: {
+          bytes: 0
+        }
+      }
+      response: {
+        body: {
+          bytes: 0
+        }
+      }
+    }
+  }
+}
+
 resource ehUsageLogger 'Microsoft.ApiManagement/service/loggers@2022-08-01' = {
   name: 'usage-eventhub-logger'
   parent: apimService

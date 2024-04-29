@@ -80,3 +80,5 @@ resource streamAnalyticsJob 'Microsoft.StreamAnalytics/streamingjobs@2021-10-01-
     }
   }
 }
+
+output asaId string = streamAnalyticsJob.id
