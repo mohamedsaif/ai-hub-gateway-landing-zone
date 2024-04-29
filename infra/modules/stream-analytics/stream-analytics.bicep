@@ -25,10 +25,10 @@ resource streamAnalyticsJob 'Microsoft.StreamAnalytics/streamingjobs@2021-10-01-
   }
   properties: {
     sku: {
-      name: 'Standard'
+      name: 'StandardV2'
     }
     eventsOutOfOrderPolicy: 'Adjust'
-    outputErrorPolicy: 'Retry'
+    outputErrorPolicy: 'Stop'
     eventsOutOfOrderMaxDelayInSeconds: 5
     compatibilityLevel: '1.2'
     inputs: [
