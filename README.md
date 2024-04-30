@@ -6,11 +6,6 @@ The AI Hub Gateway Landing Zone architecture designed to be a central hub for AI
 
 ![AI Hub Gateway Landing Zone](./assets/architecture-1-0-6.png)
 
-### Azure architecture diagram
-This example diagram shows how these different Azure services would interact in a classic [hub-spoke topology](https://learn.microsoft.com/en-us/azure/architecture/networking/architecture/hub-spoke?tabs=cli). 
-
-![AI Hub Gateway Landing Zone](./assets/azure-openai-landing-zone.png)
-
 ### Key features
 
 ![ai-hub-gateway-benefits.png](./assets/ai-hub-gateway-benefits.png)
