@@ -1,6 +1,14 @@
 # AI Hub Gateway Landing Zone
 The AI Hub Gateway Landing Zone is a reference architecture that provides a set of guidelines and best practices for implementing a central AI API gateway to empower various line-of-business units in an organization to leverage Azure AI services.
 
+## V2 of the AI Hub Gateway Landing Zone solution accelerator is now available!  🚀
+
+I'm working on V2 of the AI Hub Gateway Landing Zone solution accelerator is now available on [azd-deployment](https://github.com/mohamedsaif/ai-hub-gateway-landing-zone/tree/azd-deployment) branch! 
+
+The V2 version of the solution accelerator provides a more comprehensive and robust solution for implementing a central AI API gateway to empower various line-of-business units in an organization to leverage Azure AI services. 
+
+>NOTE: The V2 version is still work in progress and I'm working on adding more features and capabilities to the solution accelerator.
+
 ## Overview
 The AI Hub Gateway Landing Zone is designed to be a central hub for AI services, providing a single point of entry for AI services, and enabling the organization to manage and govern AI services in a consistent manner. 
 
@@ -22,7 +30,7 @@ For more details, see the [networking components section](#networking-components
 ### AI Services and Indexes
 The API Management instance would be able to communicate with one-to-many Azure OpenAI or AI service, as illustrated in the diagram. This can be a mix of 1 or more services, in 1 or more subscriptions, and also be of different model types, such as [Azure OpenAI Services](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview) or other models in [Azure Machine Learning Studio, for example Mistral](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-deploy-models-mistral?view=azureml-api-2).
 
-It is also posible to make [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/search-what-is-azure-search) indexes available through the API Management instance. This is particularly useful when wanting to consume a same index of data in several applications, while ensuring finer-grain control on the index.
+It is also possible to make [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/search-what-is-azure-search) indexes available through the API Management instance. This is particularly useful when wanting to consume a same index of data in several applications, while ensuring finer-grain control on the index.
 
 For more details, see the [additional components section](#additional-components-deployment).
 
@@ -95,8 +103,8 @@ Examples of these platforms could include:
 
 Below is a high-level guide to deploy the AI Hub Gateway Landing Zone main components.
 
-<a name="networking-components">
-### Networking components
+### <a name="networking-components">
+Networking components
 </a>
 For the AI Hub Gateway Landing Zone to be deployed, you will need to have/identify the following components:
 - **Virtual network & subnet**: A virtual network to host the AI Hub Gateway Landing Zone.
