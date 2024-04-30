@@ -83,6 +83,13 @@ param openAiInstances object = {
 When you are happy with the configuration, you can deploy the solution using the following command:
 
 ```bash
+# Use --tenant-id if you have multiple tenants with login
+azd auth login
+
+# Setup new environment
+azd env new ai-hug-gateway-dev
+
+# Deploy the solution accelerator
 azd up
 ```
 
