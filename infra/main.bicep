@@ -36,6 +36,10 @@ param eventHubNamespaceName string = ''
 @description('Name of the Cosmos Db account resource. Leave blank to use default naming conventions.')
 param cosmosDbAccountName string = ''
 
+@description('Name of the Stream Analytics resource. Leave blank to use default naming conventions.')
+param streamAnalyticsJobName string = ''
+
+
 // You can add more OpenAI instances by adding more objects to the openAiInstances object
 // Then update the apim policy xml to include the new instances
 @description('Object containing OpenAI instances. You can add more instances by adding more objects to this parameter.')
@@ -217,7 +221,7 @@ module streamAnalyticsJob './modules/stream-analytics/stream-analytics.bicep' = 
   name: 'stream-analytics-job'
   scope: resourceGroup
   params: {
-    jobName: !empty(cosmosDbAccountName) ? cosmosDbAccountName : '${abbrs.streamAnalyticsCluster}${resourceToken}'
+    jobName: !empty(streamAnalyticsJobName) ? streamAnalyticsJobName : '${abbrs.streamAnalyticsCluster}${resourceToken}'
     location: location
     tags: tags
     eventHubNamespace: eventHub.outputs.eventHubNamespaceName
