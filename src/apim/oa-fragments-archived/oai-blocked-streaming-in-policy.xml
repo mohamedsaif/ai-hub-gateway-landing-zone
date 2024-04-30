@@ -4,8 +4,7 @@
             <set-variable name="isStream"
                 value="@{
             var content = (context.Request.Body?.As<JObject>(true));
-            string streamValue = content["
-                stream"].ToString();
+            string streamValue = content["stream"].ToString();
             return streamValue;
         }" />
         </when>
