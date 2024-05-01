@@ -75,7 +75,7 @@ resource streamAnalyticsJob 'Microsoft.StreamAnalytics/streamingjobs@2021-10-01-
       name: 'transformation'
       properties: {
         query: 'SELECT * INTO [output] FROM [input]'
-        streamingUnits: 1
+        streamingUnits: 3
       }
     }
   }
