@@ -82,13 +82,32 @@ resource apimOpenaiApi 'Microsoft.ApiManagement/service/apis@2022-08-01' = {
   properties: {
     path: 'openai'
     apiRevision: '1'
-    displayName: 'Azure OpenAI Service API'
+    displayName: 'Azure OpenAI API'
     subscriptionRequired: entraAuth ? false:true 
     subscriptionKeyParameterNames: {
       header: 'api-key'
     }
     format: 'openapi'
-    value: loadTextContent('./openapi/oai-api-spec-2024-02-01.yaml')
+    value: loadTextContent('./openai-api/oai-api-spec-2024-02-01.yaml')
+    protocols: [
+      'https'
+    ]
+  }
+}
+
+resource apimAiSearchApi 'Microsoft.ApiManagement/service/apis@2022-08-01' = {
+  name: 'azure-ai-search-api'
+  parent: apimService
+  properties: {
+    path: 'search'
+    apiRevision: '1'
+    displayName: 'Azure AI Search API'
+    subscriptionRequired: entraAuth ? false:true 
+    subscriptionKeyParameterNames: {
+      header: 'api-key'
+    }
+    format: 'openapi'
+    value: loadTextContent('./ai-search-api/ai-search-api-spec.yaml')
     protocols: [
       'https'
     ]
@@ -115,6 +134,14 @@ resource retailProductOpenAIApi 'Microsoft.ApiManagement/service/products/apiLin
   parent: retailProduct
   properties: {
     apiId: apimOpenaiApi.id
+  }
+}
+
+resource retailProductAISearchApi 'Microsoft.ApiManagement/service/products/apiLinks@2023-05-01-preview' = {
+  name: 'retail-product-ai-search-api'
+  parent: retailProduct
+  properties: {
+    apiId: apimAiSearchApi.id
   }
 }
 
