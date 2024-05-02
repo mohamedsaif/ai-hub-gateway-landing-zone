@@ -22,6 +22,9 @@
                 </validate-jwt>
             </when>
         </choose>
+        <!-- Deleting api-key header to it is not passed to OpenAI endpoint-->
+        <set-header name="api-key" exists-action="delete" />
+        
         <!-- Getting OpenAI clusters configuration -->
         <cache-lookup-value key="@("oaClusters" + context.Deployment.Region + context.Api.Revision)" variable-name="oaClusters" />
         <!-- If we can't find the configuration cached, it will be loaded -->
