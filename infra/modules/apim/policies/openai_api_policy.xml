@@ -1,8 +1,6 @@
 <policies>
     <inbound>
         <base />
-        <!-- Removing Api-Key header as APIM will use managed identity -->
-        <set-header name="api-key" exists-action="delete" />
         <!-- AAD Authorization -->
         <!-- Enable AAD is named value set to true -->
         <set-variable name="entra-validate" value="{{entra-auth}}" />
@@ -24,6 +22,9 @@
                 </validate-jwt>
             </when>
         </choose>
+        <!-- Deleting api-key header to it is not passed to OpenAI endpoint-->
+        <set-header name="api-key" exists-action="delete" />
+        
         <!-- Getting OpenAI clusters configuration -->
         <cache-lookup-value key="@("oaClusters" + context.Deployment.Region + context.Api.Revision)" variable-name="oaClusters" />
         <!-- If we can't find the configuration cached, it will be loaded -->
@@ -146,11 +147,13 @@
         </choose>
         <set-variable name="routeIndex" value="-1" />
         <set-variable name="remainingRoutes" value="1" />
-        <!-- Backend Managed Identity (User Assigned Identity) -->
+        <!-- Backend Managed Identity -->
         <authentication-managed-identity resource="https://cognitiveservices.azure.com" output-token-variable-name="msi-access-token" client-id="{{uami-client-id}}" ignore-error="false" />
         <set-header name="Authorization" exists-action="override">
             <value>@("Bearer " + (string)context.Variables["msi-access-token"])</value>
         </set-header>
+        <set-variable name="backendIndex" value="-1" />
+        <set-variable name="remainingBackends" value="1" />
     </inbound>
     <backend>
         <retry condition="@(context.Response != null && (context.Response.StatusCode == 429 || context.Response.StatusCode >= 500) && ((Int32)context.Variables["remainingRoutes"]) > 0)" count="3" interval="0">
@@ -270,13 +273,13 @@
     </backend>
     <outbound>
         <base />
-        <!-- To reuse response body in several blocks, it is being stored as variable -->
+        <!-- Set the response body as a variable to be used in various policies -->
         <set-variable name="responseBody" value="@(context.Response.Body.As<JObject>())" />
         
-        <!-- Log to OpenAI usage EventHub -->
+        <!-- Log OpenAI usage to EventHub -->
         <choose>
             <when condition="@(context.Response.StatusCode == 200)">
-                <log-to-eventhub logger-id="chargeback-eventhub-logger">@{
+                <log-to-eventhub logger-id="usage-eventhub-logger">@{
                         //Avoid reading response body as it can only be ready once, instead, before calling this fragement, a variable call responseBody will be set in the outbound policy
                         //var responseBody = context.Response.Body?.As<JObject>(true); //Avoid this one
                         var responseBody = (JObject)context.Variables["responseBody"]; //It is set in the outbound policy before calling the fragment
@@ -293,7 +296,9 @@
                             new JProperty("aiGatewayId", context.Deployment?.Gateway?.Id ?? "NA"),
                             new JProperty("RequestIp", context.Request?.IpAddress ?? "NA"),
                             new JProperty("operationName", context.Operation?.Name ?? "NA"),
-                            new JProperty("routeUrl", (string)context.Variables.GetValueOrDefault<string>("routeUrl", "NA")),
+                            new JProperty("sessionId", (string)context.Variables.GetValueOrDefault<string>("sessionId", "NA")),
+                            new JProperty("endUserId", (string)context.Variables.GetValueOrDefault<string>("endUserId", "NA")),
+                            new JProperty("backendId", (string)context.Variables.GetValueOrDefault<string>("backendId", "NA")),
                             new JProperty("routeLocation", (string)context.Variables.GetValueOrDefault<string>("routeLocation", "NA")),
                             new JProperty("routeName", (string)context.Variables.GetValueOrDefault<string>("routeName", "NA")),
                             new JProperty("deploymentName", (string)context.Variables.GetValueOrDefault<string>("deploymentName", "NA")),
@@ -304,7 +309,7 @@
                     }</log-to-eventhub>
             </when>
         </choose>
-        
+
         <!-- This will return the used backend URL in the HTTP header response. Remove it if you don't want to expose this data -->
         <!--
         <set-header name="x-openai-backend-id" exists-action="override">
@@ -312,6 +317,9 @@
         </set-header>
         -->
 
+        <set-body>@{
+            return ((JObject)context.Variables["responseBody"]).ToString();
+        }</set-body>
     </outbound>
     <on-error>
         <base />
