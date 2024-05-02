@@ -22,9 +22,18 @@
                 </validate-jwt>
             </when>
         </choose>
+        <!-- Detecting streaming request -->
+        <choose>
+            <when condition="@(context.Request.Body.As<JObject>(true)[" stream"] != null && context.Request.Body.As<JObject>(true)[" stream"].Type != JTokenType.Null)">
+                <set-variable name="isStream" value="@{
+                var content = (context.Request.Body?.As<JObject>(true));
+                string streamValue = content["stream"].ToString();
+                return streamValue;
+            }" />
+            </when>
+        </choose>
         <!-- Deleting api-key header to it is not passed to OpenAI endpoint-->
         <set-header name="api-key" exists-action="delete" />
-        
         <!-- Getting OpenAI clusters configuration -->
         <cache-lookup-value key="@("oaClusters" + context.Deployment.Region + context.Api.Revision)" variable-name="oaClusters" />
         <!-- If we can't find the configuration cached, it will be loaded -->
@@ -273,13 +282,15 @@
     </backend>
     <outbound>
         <base />
-        <!-- Set the response body as a variable to be used in various policies -->
-        <set-variable name="responseBody" value="@(context.Response.Body.As<JObject>())" />
-        
-        <!-- Log OpenAI usage to EventHub -->
+        <!-- Usage logs are not supported with streaming requests -->
         <choose>
-            <when condition="@(context.Response.StatusCode == 200)">
-                <log-to-eventhub logger-id="usage-eventhub-logger">@{
+            <when condition="@(context.Variables.GetValueOrDefault<string>(" isStream"," false").Equals(" true", StringComparison.OrdinalIgnoreCase))">
+                <!-- Set the response body as a variable to be used in various policies -->
+                <set-variable name="responseBody" value="@(context.Response.Body.As<JObject>())" />
+                <!-- Log OpenAI usage to EventHub -->
+                <choose>
+                    <when condition="@(context.Response.StatusCode == 200)">
+                        <log-to-eventhub logger-id="usage-eventhub-logger">@{
                         //Avoid reading response body as it can only be ready once, instead, before calling this fragement, a variable call responseBody will be set in the outbound policy
                         //var responseBody = context.Response.Body?.As<JObject>(true); //Avoid this one
                         var responseBody = (JObject)context.Variables["responseBody"]; //It is set in the outbound policy before calling the fragment
@@ -307,19 +318,19 @@
                             new JProperty("totalTokens", responseBody?["usage"]?["total_tokens"]?.ToString() ?? "0")
                     ).ToString();
                     }</log-to-eventhub>
-            </when>
-        </choose>
-
-        <!-- This will return the used backend URL in the HTTP header response. Remove it if you don't want to expose this data -->
-        <!--
+                    </when>
+                </choose>
+                <!-- This will return the used backend URL in the HTTP header response. Remove it if you don't want to expose this data -->
+                <!--
         <set-header name="x-openai-backend-id" exists-action="override">
             <value>@(context.Variables.GetValueOrDefault<string>("backend-id", "none"))</value>
         </set-header>
         -->
-
-        <set-body>@{
+                <set-body>@{
             return ((JObject)context.Variables["responseBody"]).ToString();
         }</set-body>
+            </when>
+        </choose>
     </outbound>
     <on-error>
         <base />
