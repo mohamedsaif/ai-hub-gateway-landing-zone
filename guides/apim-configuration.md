@@ -55,24 +55,34 @@ Let's have a look at the configuration components:
 ```csharp
 JArray routes = new JArray();
 routes.Add(new JObject()
-        {
-            { "name", "REPLACE1" },
-            { "location", "swedencentral" },
-            { "url", "https://REPLACE1.openai.azure.com" },
-            { "priority", 1},
-            { "isThrottling", false }, 
-            { "retryAfter", DateTime.MinValue } 
-        });
+{
+    { "name", "EastUS" },
+    { "location", "eastus" },
+    { "backend-id", "openai-backend-0" },
+    { "priority", 1},
+    { "isThrottling", false }, 
+    { "retryAfter", DateTime.MinValue } 
+});
 
 routes.Add(new JObject()
-        {
-            { "name", "REPLACE2" },
-            { "location", "westeurope" },
-            { "url", "https://REPLACE2.openai.azure.com" },
-            { "priority", 1},
-            { "isThrottling", false },
-            { "retryAfter", DateTime.MinValue }
-        });
+{
+    { "name", "NorthCentralUS" },
+    { "location", "northcentralus" },
+    { "backend-id", "openai-backend-1" },
+    { "priority", 1},
+    { "isThrottling", false },
+    { "retryAfter", DateTime.MinValue }
+});
+
+routes.Add(new JObject()
+{
+    { "name", "EastUS2" },
+    { "location", "eastus2" },
+    { "backend-id", "openai-backend-2" },
+    { "priority", 1},
+    { "isThrottling", false },
+    { "retryAfter", DateTime.MinValue }
+});
 ```
 - **Clusters**: a json array that include the clusters to various Azure OpenAI endpoints.
 ```csharp
@@ -132,11 +142,11 @@ $apimServiceName = "apim-ai-gateway"
 $resourceGroupName = "rg-ai-gateway"
 
 # Event Hub connection string
-$eventHubConnectionString = "Endpoint=sb://<EventHubsNamespace>.servicebus.windows.net/;SharedAccessKeyName=<KeyName>;SharedAccessKey=<key
+$eventHubConnectionString = "Endpoint=sb://<EventHubsNamespace>.servicebus.windows.net/;SharedAccessKeyName=<KeyName>;SharedAccessKey=<key>"
 
 # Create logger
 $context = New-AzApiManagementContext -ResourceGroupName $resourceGroupName -ServiceName $apimServiceName
-New-AzApiManagementLogger -Context $context -LoggerId "chargeback-eventhub-logger" -Name "chargeback-eventhub-logger" -ConnectionString $eventHubConnectionString -Description "Event Hub logger for OpenAI usage metrics"
+New-AzApiManagementLogger -Context $context -LoggerId "usage-eventhub-logger" -Name "usage-eventhub-logger" -ConnectionString $eventHubConnectionString -Description "Event Hub logger for OpenAI usage metrics"
 ```
 
 Using this policy, you will have records like the following (I used CosmosDb to store these metrics from Event Hub through Stream Analytics job):
