@@ -22,6 +22,7 @@
                 </validate-jwt>
             </when>
         </choose>
+        
         <!-- Detecting streaming request -->
         <choose>
             <when condition="@(context.Request.Body.As<JObject>(true)[" stream"] != null && context.Request.Body.As<JObject>(true)[" stream"].Type != JTokenType.Null)">
@@ -32,8 +33,10 @@
             }" />
             </when>
         </choose>
+
         <!-- Deleting api-key header to it is not passed to OpenAI endpoint-->
         <set-header name="api-key" exists-action="delete" />
+        
         <!-- Getting OpenAI clusters configuration -->
         <cache-lookup-value key="@("oaClusters" + context.Deployment.Region + context.Api.Revision)" variable-name="oaClusters" />
         <!-- If we can't find the configuration cached, it will be loaded -->
@@ -282,11 +285,12 @@
     </backend>
     <outbound>
         <base />
-        <!-- Usage logs are not supported with streaming requests -->
+        <!-- Usage logs for non-streaming requests only (usage for streaming is not supported yet) -->
         <choose>
-            <when condition="@(context.Variables.GetValueOrDefault<string>(" isStream"," false").Equals(" true", StringComparison.OrdinalIgnoreCase))">
+            <when condition="@(context.Variables.GetValueOrDefault<string>("isStream","false").Equals("false", StringComparison.OrdinalIgnoreCase))">
                 <!-- Set the response body as a variable to be used in various policies -->
                 <set-variable name="responseBody" value="@(context.Response.Body.As<JObject>())" />
+                
                 <!-- Log OpenAI usage to EventHub -->
                 <choose>
                     <when condition="@(context.Response.StatusCode == 200)">
