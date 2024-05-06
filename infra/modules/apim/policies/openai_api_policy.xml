@@ -299,7 +299,7 @@
                         //var responseBody = context.Response.Body?.As<JObject>(true); //Avoid this one
                         var responseBody = (JObject)context.Variables["responseBody"]; //It is set in the outbound policy before calling the fragment
                         return new JObject(
-                            new JProperty("id", responseBody?["id"]?.ToString() ?? "NA"),
+                            new JProperty("id", responseBody?["id"]?.ToString() ?? Guid.NewGuid().ToString()),
                             new JProperty("timestamp", DateTime.UtcNow.ToString()),
                             new JProperty("appId", context.Request.Headers.GetValueOrDefault("Authorization",string.Empty).Split(' ').LastOrDefault()?.AsJwt()?.Claims.GetValueOrDefault("appid", "NA")),
                             new JProperty("subscriptionId", context.Subscription?.Id?.ToString() ?? "Portal-Admin"),
