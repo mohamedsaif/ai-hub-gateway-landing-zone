@@ -1,7 +1,7 @@
 <policies>
     <inbound>
         <base />
-        <rate-limit-by-key calls="10" renewal-period="60" counter-key="@(context.Subscription?.Key ?? "anonymous")" increment-condition="@(context.Response.StatusCode >= 200 && context.Response.StatusCode < 300)" />
+        <!-- TPM rate limit for specific product -->
         <rate-limit-by-key calls="100" renewal-period="60" counter-key="@(String.Concat(context.Subscription.Id,"tpm"))" increment-condition="@(context.Response.StatusCode >= 200 && context.Response.StatusCode < 400)" increment-count="@(((JObject)context.Variables["responseBody"]).SelectToken("usage.total_tokens")?.ToObject<int>() ?? 0)" remaining-calls-header-name="remainingTPM" total-calls-header-name="totalTPM" />
     </inbound>
     <backend>

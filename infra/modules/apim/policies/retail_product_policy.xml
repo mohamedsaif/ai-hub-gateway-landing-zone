@@ -6,7 +6,7 @@
         
         <!-- Restrict access for this product to specific models -->
         <choose>
-            <when condition="@(!new [] { "gpt-4", "embedding" }.Contains(context.Variables.GetValueOrDefault<string>("deploymentName")))">
+            <when condition="@(!new [] { "gpt-4", "embedding" }.Contains(context.Request.MatchedParameters["deployment-id"] ?? String.Empty))">
                 <return-response>
                     <set-status code="401" reason="Unauthorized" />
                 </return-response>
