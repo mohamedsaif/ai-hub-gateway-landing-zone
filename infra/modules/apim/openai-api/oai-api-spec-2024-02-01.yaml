@@ -4,7 +4,7 @@ info:
   description: 'Azure OpenAI APIs for completions, images, transcription and search'
   version: '1.0'
 servers:
-  - url: https://apim-prod-mcaps-gateway.az.mobivisions.com/ai-hub-gw-2
+  - url: https://REPLACE/ai-hub-gw
 paths:
   '/deployments/{deployment-id}/completions':
     post:
