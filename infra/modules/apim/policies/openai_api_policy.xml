@@ -319,7 +319,7 @@
                             new JProperty("deploymentName", (string)context.Variables.GetValueOrDefault<string>("deploymentName", "NA")),
                             new JProperty("promptTokens", responseBody?["usage"]?["prompt_tokens"]?.ToString() ?? "0"),
                             new JProperty("responseTokens", responseBody?["usage"]?["completion_tokens"]?.ToString() ?? "0"),
-                            new JProperty("totalTokens", responseBody?["usage"]?["total_tokens"]?.ToString() ?? "0")
+                            new JProperty("totalTokens", responseBody?["usage"]?["total_tokens"]?.ToString() ?? "1")
                     ).ToString();
                     }</log-to-eventhub>
                     </when>

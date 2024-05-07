@@ -16,11 +16,9 @@ Dimensions of the routing strategies include:
 - **Configuration update**: Ability to update the routing configuration without affecting the existing traffic is critical to allow for rolling updates of the routing configuration.
     - For example, if you have a new OpenAI deployment that is available, you might want to update the routing configuration to include it and allow for new traffic to be routed to it without affecting the existing traffic (and in also support rolling back certain update when needed).
 
-In the [src/apim/policies](/src/apim/oa-fragments) folder, you will find the policy fragments that you can use to apply to the OpenAI API.
+This routing strategy based the great work of [APIM Smart Load Balancing](https://github.com/andredewes/apim-aoai-smart-loadbalancing/tree/main), it is worth checking out.
 
-I've built my routing strategy based the great work of [APIM Smart Load Balancing](https://github.com/andredewes/apim-aoai-smart-loadbalancing/tree/main), it is worth checking out.
-
-I've built on top of that additional capabilities to make the solution address all the needs outlined above for a robust and reliable AI routing engine.
+This routing strategy is designed to address all the needs outlined above for a robust and reliable AI routing engine.
 
 Implementation details are as follows:
 - **Clusters (model based routing)**: it is a simple concept to group multiple OpenAI endpoints that support specific OpenAI deployment name. 
@@ -44,96 +42,184 @@ Having revision number as part of the cache key will allow for rolling updates o
 
 Also at any given time, you will have different cached routes that represent different models/region, and based on the incoming request, you can route to the correct OpenAI endpoint.
 
-Let's have a look at the policy fragments components:
+## Working with the Policy
 
-#### oai-clusters-lb-configuration-in-policy.xml
-This inbound policy fragment contains the main clusters and routes configurations.
+This guide provides insights into customizing API Management policies to enable smart load balancing for Azure OpenAI endpoints. While Azure API Management does not natively support this scenario, custom policies offer a flexible solution. Below, we explore the key components of these policies, their configuration, and their role in efficient load management.
 
-Let's have a look at the configuration components:
+### Understanding `oaClusters`
 
-- **Routes**: a json array that include the routes to various Azure OpenAI endpoints.
-```csharp
-JArray routes = new JArray();
-routes.Add(new JObject()
-{
-    { "name", "EastUS" },
-    { "location", "eastus" },
-    { "backend-id", "openai-backend-0" },
-    { "priority", 1},
-    { "isThrottling", false }, 
-    { "retryAfter", DateTime.MinValue } 
-});
+**Clusters (model based routing)**: it is a simple concept to group multiple OpenAI endpoints that support specific OpenAI deployment name (specific model and version). 
+    - For example, if the model is gpt-4 and it exists only in 2 OpenAI instances, I will create a cluster with these 2 endpoints only. On the other hand, gpt-35-turbo exists in 5 OpenAI instances, I will create a cluster with these 5 endpoints.
+    - In order for this routing to work, OpenAI deployment names across regions must use the same name as I rely on the URL path to extract the direct deployment name which then results in specific routes to be used.
 
-routes.Add(new JObject()
-{
-    { "name", "NorthCentralUS" },
-    { "location", "northcentralus" },
-    { "backend-id", "openai-backend-1" },
-    { "priority", 1},
-    { "isThrottling", false },
-    { "retryAfter", DateTime.MinValue }
-});
+### Understanding `routes` Variable Configuration
 
-routes.Add(new JObject()
-{
-    { "name", "EastUS2" },
-    { "location", "eastus2" },
-    { "backend-id", "openai-backend-2" },
-    { "priority", 1},
-    { "isThrottling", false },
-    { "retryAfter", DateTime.MinValue }
-});
-```
-- **Clusters**: a json array that include the clusters to various Azure OpenAI endpoints.
-```csharp
-JArray clusters = new JArray();
-clusters.Add(new JObject()
+The `routes` variable is crucial as it defines the OpenAI endpoints and their priorities. This example demonstrates setting up various endpoints with priorities and throttling status. 
+
+   - Each cluster will reference supported route from this json array
+    - Each route will have a friendly name, location, priority, and throttling status.
+
+This sample deployment, creates 3 OpenAI instances in 3 different regions (EastUS, NorthCentralUS, EastUS2) and assigns them to the same priority level (which mean they will all be available for routing).
+
+You can also see that this sample configuration is using a single region deployment of APIM gateway indicated by the always true condition `if(context.Deployment.Region == "West Europe" || true)`. 
+
+This is to show how you can configure different routing configuration based on the region of the APIM gateway.
+
+>**NOTE**: Before making any changes to the policy, please ensure creating **new API revision** first to test the new configuration and avoid any impact on the existing traffic.
+
+```xml
+<set-variable name="oaClusters" value="@{
+    // route is an Azure OpenAI API endpoints
+    JArray routes = new JArray();
+    // cluster is a group of routes that are capable of serving a specific deployment name (model and version)
+    JArray clusters = new JArray();
+    // Update the below if condition when using multiple APIM gateway regions/SHGW to get different configuartions for each region
+    if(context.Deployment.Region == "West Europe" || true)
+    {
+        // Adding all Azure OpenAI endpoints routes (which are set as APIM Backend)
+        routes.Add(new JObject()
         {
-            { "deploymentName", "gpt-35-turbo" },
-            { "routes", new JArray(routes[0], routes[1]) }
+            { "name", "EastUS" },
+            { "location", "eastus" },
+            { "backend-id", "openai-backend-0" },
+            { "priority", 1},
+            { "isThrottling", false }, 
+            { "retryAfter", DateTime.MinValue } 
         });
 
-clusters.Add(new JObject()
+        routes.Add(new JObject()
+        {
+            { "name", "NorthCentralUS" },
+            { "location", "northcentralus" },
+            { "backend-id", "openai-backend-1" },
+            { "priority", 1},
+            { "isThrottling", false },
+            { "retryAfter", DateTime.MinValue }
+        });
+
+        routes.Add(new JObject()
+        {
+            { "name", "EastUS2" },
+            { "location", "eastus2" },
+            { "backend-id", "openai-backend-2" },
+            { "priority", 1},
+            { "isThrottling", false },
+            { "retryAfter", DateTime.MinValue }
+        });
+
+        // For each deployment name, create a cluster with the routes that can serve it
+        // It is important in you OpenAI deployments to use the same name across instances
+        clusters.Add(new JObject()
+        {
+            { "deploymentName", "chat" },
+            { "routes", new JArray(routes[0], routes[1], routes[2]) }
+        });
+
+        clusters.Add(new JObject()
         {
             { "deploymentName", "embedding" },
-            { "routes", new JArray(routes[0], routes[1]) }
+            { "routes", new JArray(routes[0], routes[1], routes[2]) }
         });
 
-clusters.Add(new JObject()
-        {
-            { "deploymentName", "gpt-4" },
-            { "routes", new JArray(routes[0]) }
-        });
+        //If you want to add additional speical models like DALL-E or GPT-4, you can add them here
+        //In this cluster, DALL-E is served by one OpenAI endpoint route and GPT-4 is served by two OpenAI endpoint routes
+        //clusters.Add(new JObject()
+        //{
+        //    { "deploymentName", "dall-e-3" },
+        //    { "routes", new JArray(routes[0]) }
+        //});
 
-clusters.Add(new JObject()
-        {
-            { "deploymentName", "dall-e-3" },
-            { "routes", new JArray(routes[0]) }
-        });
+        //clusters.Add(new JObject()
+        //{
+        //    { "deploymentName", "gpt-4" },
+        //    { "routes", new JArray(routes[0], routes[1]) }
+        //});
+        
+    }
+    else
+    {
+        //No clusters found for selected region, either return error (defult behavior) or set default cluster in the else section
+    }
+    
+    return clusters;   
+}" />
 ```
-- **Caching**: caching the clusters and routes to allow it to be shared across multiple API calls contexts.
+### Safe configuration changes
+
+**Caching**: caching the clusters and routes allow it to be shared across multiple API calls.
+
 ```xml
 <cache-store-value key="@("oaClusters" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["oaClusters"])" duration="60" />
-
+...
 <cache-store-value key="@(context.Request.MatchedParameters["deployment-id"] + "Routes" + context.Deployment.Region + context.Api.Revision)" value="@((JArray)context.Variables["routes"])" duration="60" />
 ```
 
-#### oai-clusters-lb-configuration-be-policy.xml
-This backend policy fragment contains the main routing logic for the configured inbound policy above.
+You can see that cache key is taking into consideration region, model deployment name and API revision to ensure that the cache is unique for each configuration.
 
-It selects the available routes based on model, region and API revision and provide the smart load balancing capabilities:
-- Priority based routing:
-    - Like if you have a cluster with 3 routs, 2 with priority 1 and 1 with priority 2, the gateway will always randomly select one of the 2 routes with priority 1 first and fall back to priority 2 if the first 2 routes are not available (is throttling).
-- Throttling support:
-    - Ability to take a specific route out of the routing pool if it is throttling and fall back to the next available route.
-    - Activate the throttling route after a specific time (retryAfter) to allow for the route to be available again.
+If you need to update the configuration, I would recommend creating first a new API revision, update the configuration and test it. 
 
-For more elaborate description of this routing, refer to the original [APIM Smart Load Balancing](https://github.com/andredewes/apim-aoai-smart-loadbalancing/tree/main) implementation.
+Once you are happy with the new configuration, you can update the API to use the new revision as the current revision.
 
-#### oai-usage-eventhub-out-policy.xml
+If something went wrong, you can always rollback to the previous revision.
+
+### Authentication Managed Identity
+
+This section of the policy injects the Azure Managed Identity from your API Management instance as an HTTP header for OpenAI. This method is recommended for ease of API key management across different backends. 
+```xml
+<authentication-managed-identity resource="https://cognitiveservices.azure.com" output-token-variable-name="msi-access-token" ignore-error="false" />
+<set-header name="Authorization" exists-action="override">
+    <value>@("Bearer " + (string)context.Variables["msi-access-token"])</value>
+</set-header>
+```
+
+### Backend Health Check
+
+Before every call to OpenAI, the policy checks if any backends can be marked as healthy after the specified "Retry-After" period.
+```xml
+<set-variable name="listBackends" value="@{
+    JArray backends = (JArray)context.Variables["listBackends"];
+
+    for (int i = 0; i < backends.Count; i++)
+    {
+        JObject backend = (JObject)backends[i];
+
+        if (backend.Value<bool>("isThrottling") && DateTime.Now >= backend.Value<DateTime>("retryAfter"))
+        {
+            backend["isThrottling"] = false;
+            backend["retryAfter"] = DateTime.MinValue;
+        }
+    }
+
+    return backends; 
+}" />
+```
+
+### Handling 429 and 5xx Errors
+
+This code segment is triggered when a 429 or 5xx error occurs, updating the backend status accordingly based on the "Retry-After" header. 
+```xml
+<when condition="@(context.Response != null && (context.Response.StatusCode == 429 || context.Response.StatusCode.ToString().StartsWith("5")) )">
+    <cache-lookup-value key="listBackends" variable-name="listBackends" />
+    <set-variable name="listBackends" value="@{
+        JArray backends = (JArray)context.Variables["listBackends"];
+        int currentBackendIndex = context.Variables.GetValueOrDefault<int>("backendIndex");
+        int retryAfter = Convert.ToInt32(context.Response.Headers.GetValueOrDefault("Retry-After", "10"));
+
+        JObject backend = (JObject)backends[currentBackendIndex];
+        backend["isThrottling"] = true;
+        backend["retryAfter"] = DateTime.Now.AddSeconds(retryAfter);
+
+        return backends;      
+    }" />
+```
+
+There are other parts of the policy in the sources but these are the most relevant. The original [source XML](../infra/modules/apim/policies/openai_api_policy.xml) you can find in this repo contains comments explaining what each section does.
+
+### Usage & Charge-back tracking
+
 This outbound policy fragment contains the main usage tracking logic for the configured inbound policy above.
 
-It sends the usage data to the configured Event Hub to allow for usage tracking and charge-back.
+It sends the usage data to the configured Event Hub logger to allow for usage tracking and charge-back.
 
 To use this policy, you need first to configure the Event Hub logger connection string and name.
 ```ps1
@@ -153,50 +239,56 @@ Using this policy, you will have records like the following (I used CosmosDb to 
 
 ```json
 {
-    "id": "chatcmpl-91p2WwO4gvev3KSpwDwWjvdMsEpDs",
-    "timestamp": "2024-03-12T05:32:32.0000000Z",
-    "appId": "0000000-0000-4f5f-8ccf-8287272b09ad",
+    "id": "chatcmpl-9LkbdMtFW3u9rN9TazmoAzBShJlJF",
+    "timestamp": "5/6/2024 4:51:09 AM",
+    "appId": "42e0ee4f-4059-498f-8146-bb05294493e5",
     "subscriptionId": "master",
-    "productName": "AI-Marketing",
+    "productName": "AI-HR",
     "targetService": "chat.completion",
     "model": "gpt-35-turbo",
-    "routeUrl": "https://REPLACE1.openai.azure.com/openai",
-    "routeLocation": "swedencentral",
-    "routeName": "SwedenCentralAzureOpenAI",
-    "promptTokens": 9,
-    "responseTokens": 10,
-    "totalTokens": 19,
-    "EventProcessedUtcTime": "2024-03-12T05:33:45.5528316Z",
+    "gatewayName": "APIM-NAME.azure-api.net",
+    "gatewayRegion": "Sweden Central",
+    "aiGatewayId": "managed",
+    "RequestIp": "1.1.1.1",
+    "operationName": "Creates a completion for the chat message",
+    "sessionId": "NA",
+    "endUserId": "NA",
+    "backendId": "openai-backend-1",
+    "routeLocation": "northcentralus",
+    "routeName": "NorthCentralUS",
+    "deploymentName": "chat",
+    "promptTokens": "25",
+    "responseTokens": "43",
+    "totalTokens": "68",
+    "EventProcessedUtcTime": "2024-05-06T04:51:26.6917416Z",
     "PartitionId": 0,
-    "EventEnqueuedUtcTime": "2024-03-12T05:32:32.8800000Z",
-    "deploymentName": "gpt-35-turbo"
+    "EventEnqueuedUtcTime": "2024-05-06T04:51:26.4090000Z",
+    "_rid": "xzlBAOBAzO0BAAAAAAAAAA==",
+    "_self": "dbs/xzlBAA==/colls/xzlBAOBAzO0=/docs/xzlBAOBAzO0BAAAAAAAAAA==/",
+    "_etag": "\"00007a03-0000-4700-0000-663861d20000\"",
+    "_attachments": "attachments/",
+    "_ts": 1714971090
 }
 ```
 
 Based on these records, I've created the following PowerBI dashboard to track the usage and charge-back:
 
-![PowerBI dashboard](./assets/powerbi-usage-dashboard.png)
+![PowerBI dashboard](../assets/powerbi-usage-dashboard.png)
 
-#### oai-blocked-streaming-in-policy.xml
-This inbound policy fragment that prevent streaming requests to the OpenAI API.
+If a session and/or user tracking is required, make sure to assign values to the following variables (you can use any part of the request like headers for example to inject the values into the variables).
 
-Currently streaming has 2 challenges when it comes to charge back and usage tracking:
-- Current approach to usage metrics logging do not support streaming requests due to conflict with response buffering (which result in 500 error), so you can't use ```log-to-eventhub``` policy.
-- OpenAI streaming requests do not provide usage metrics in the response as it stands today (maybe it will change in the future).
+---csharp
+<log-to-eventhub logger-id="usage-eventhub-logger">@{
+...
+new JProperty("sessionId", (string)context.Variables.GetValueOrDefault<string>("sessionId", "NA")),
+new JProperty("endUserId", (string)context.Variables.GetValueOrDefault<string>("endUserId", "NA")),
+...
+}</log-to-eventhub>
+---
 
-APIM is perfectly fine to proxy streamed backends, but usage metrics will not be captured.
+Setting these variables will allow you to track the usage and charge-back based on the session and user.
 
-One solution to this is to use an app as backend to log the usage metrics and charge-back and proxy the streaming requests.
-
-This app will rely on a token counting SDK to manually calculate the tokens and ship them to Event Hub when steam is done.
-
-Check out one implementation for this on [enterprise-azure-ai](https://github.com/Azure/enterprise-azureai) with an AI Proxy app that can do that.
-
-I'm working on adopting this app so it will be only used for streaming requests (currently it is designed to do both streaming and non-streaming requests in addition to having the routing logic).
-
-There are few ways to handle this, one of them is to use an app as backend to log the usage metrics and charge-back and proxy the streaming requests.
-
-#### Capacity management
+### Capacity management
 In OpenAI calls, tokens are used to manage capacity and rate limits.
 
 Currently APIM natively support rate limiting on the number of requests per time window, but we can leverage that to repurpose it to manage capacity based on tokens.
@@ -205,13 +297,23 @@ APIM policy [rate-limit-by-key](https://docs.microsoft.com/en-us/azure/api-manag
 
 ```xml
 
-<!-- Rate limit on TPM (Outbound Policy) -->
-<!-- Note: this policy is designed to be integrated with other APIM policies in this guide -->
-<rate-limit-by-key calls="5000" renewal-period="60" 
-    counter-key="@(String.Concat(context.Subscription.Id,"tpm"))" 
-    increment-condition="@(context.Response.StatusCode >= 200 && context.Response.StatusCode < 400)" 
-    increment-count="@(((JObject)context.Variables["responseBody"]).SelectToken("usage.total_tokens")?.ToObject<int>() ?? 0)" 
-    remaining-calls-header-name="remainingTPM" total-calls-header-name="totalTPM" />
+<inbound>
+    <base />
+    <!-- TPM rate limit for specific product (only with non-streaming requests -->
+    <choose>
+        <when condition="@(!(context.Request.Body.As<JObject>(true)[" stream"] != null && context.Request.Body.As<JObject>(true)[" stream"].Type != JTokenType.Null))">
+            <rate-limit-by-key calls="100" renewal-period="60" counter-key="@(String.Concat(context.Subscription.Id,"tpm"))" increment-condition="@(context.Response.StatusCode >= 200 && context.Response.StatusCode < 400)" increment-count="@(((JObject)context.Variables["responseBody"]).SelectToken("usage.total_tokens")?.ToObject<int>() ?? 0)" remaining-calls-header-name="remainingTPM" total-calls-header-name="totalTPM" />
+        </when>
+    </choose>
+    <!-- Restrict access for this product to specific models -->
+    <choose>
+        <when condition="@(!new [] { "gpt-4", "embedding" }.Contains(context.Request.MatchedParameters["deployment-id"] ?? String.Empty))">
+            <return-response>
+                <set-status code="401" reason="Unauthorized" />
+            </return-response>
+        </when>
+    </choose>
+</inbound>
 
 ```
 
@@ -237,8 +339,65 @@ One more capacity control to use is the [quota-by-key](https://docs.microsoft.co
 <quota-by-key calls="100" renewal-period="300" counter-key="@(context.Subscription.Id)" increment-condition="@(context.Response.StatusCode >= 200 && context.Response.StatusCode < 400)" />
 
 ```
+
 Above quota policy will limit the number of requests to 100 per 5 minutes.
 
 My recommendation is to use only the minimum required capacity management policies to avoid over-complicating the solution (for example, token limit only can be sufficient in some cases).
 
 >NOTE: I believe native policy support is coming to APIM soon, but for now, you can use the custom rate limiter to manage capacity based on tokens.
+
+### Handling streaming requests
+
+Although this policy will continue to work for streaming requests, there are some limitations to consider.
+
+Currently streaming has 2 challenges when it comes to charge back and usage tracking:
+
+- Current approach to usage metrics logging do not support streaming requests due to conflict with response buffering (which result in 500 error), so you can't use ```log-to-eventhub``` policy.
+- OpenAI streaming requests do not provide usage metrics in the response as it stands today (maybe it will change in the future).
+- This means that capacity management also through ```rate-limit-by-key``` policy will not work as it is based on the usage metrics in the response.
+
+To all transparent handling of streaming requests, both ```log-to-eventhub``` and ```rate-limit-by-key``` policies are under a conditional execution ```choose``` block so they will work only with non-streaming requests. 
+
+```xml
+<!-- Usage logs for non-streaming requests only (usage for streaming is not supported yet) -->
+<choose>
+    <when condition="@(context.Variables.GetValueOrDefault<string>("isStream","false").Equals("false", StringComparison.OrdinalIgnoreCase))">
+    ...
+    </when>
+</choose>
+
+```
+
+APIM is perfectly fine to proxy streamed requests to backends, but usage metrics will not be captured (you still get).
+
+One solution to this is to use an app as backend to log the usage metrics and charge-back and proxy the streaming requests.
+
+This app will rely on a token counting SDK to manually calculate the tokens and ship them to Event Hub when steam is done.
+
+Check out one implementation for this on [enterprise-azure-ai](https://github.com/Azure/enterprise-azureai) with an AI Proxy app that can do that.
+
+There are few ways to handle this, one of them is to use an app as backend to log the usage metrics and charge-back and proxy the streaming requests.
+
+### Model-based RBAC
+
+In some cases, you might want to restrict access to specific models based on the the business unit or team using OpenAI endpoint.
+
+The following policy can be implemented at a product level to restrict access to specific models.
+
+```xml
+
+<inbound>
+    <base />
+    <!-- Restrict access for this product to specific models -->
+    <choose>
+        <when condition="@(!new [] { "gpt-4", "embedding" }.Contains(context.Request.MatchedParameters["deployment-id"] ?? String.Empty))">
+            <return-response>
+                <set-status code="401" reason="Unauthorized" />
+            </return-response>
+        </when>
+    </choose>
+</inbound>
+
+```
+
+The above policy will restrict access to only 2 deployments (gpt-4 and embedding), any other model deployment will get ```401 Unauthorized```.
